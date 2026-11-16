@@ -1,0 +1,60 @@
+# Checks that the patch series still applies to the pinned Chromium, without
+# building anything (a few seconds on a free runner).
+#
+# - "fork": this repository as it is, own patches included.
+# - "upstream": the latest BareBrowser/bare-browser main with this fork's own
+#   patches (those upstream does not have) added on top. A failure here means
+#   syncing the fork will break one of them.
+name: Check patches
+
+on:
+  push:
+    paths:
+      - "patches/**"
+      - "BUILDING.md"
+      - "tools/check_patches.py"
+      - ".github/workflows/check-patches.yml"
+  pull_request:
+    paths:
+      - "patches/**"
+      - "BUILDING.md"
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fork:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply the series to the pinned Chromium
+        run: python3 tools/check_patches.py
+
+  upstream:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: fork
+      - uses: actions/checkout@v4
+        with:
+          repository: BareBrowser/bare-browser
+          ref: main
+          path: upstream
+      - name: Add this fork's own patches to upstream
+        run: |
+          own=""
+          for p in fork/patches/*.patch; do
+            name=$(basename "$p")
+            if [ ! -e "upstream/patches/$name" ]; then
+              cp "$p" upstream/patches/
+              own="$own $name"
+            fi
+          done
+          echo "Own patches:${own:- none}"
+          cp fork/tools/check_patches.py upstream/tools/check_patches.py
+      - name: Apply the series to upstream's pinned Chromium
+        run: python3 upstream/tools/check_patches.py
