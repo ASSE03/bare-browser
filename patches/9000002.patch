@@ -1,0 +1,426 @@
+diff --git a/chrome/android/BUILD.gn b/chrome/android/BUILD.gn
+index b5877c4..8bac695 100644
+--- a/chrome/android/BUILD.gn
++++ b/chrome/android/BUILD.gn
+@@ -2254,6 +2254,7 @@ if (_is_default_toolchain) {
+       "java/src/org/chromium/chrome/browser/GracefulShutdownService.java",
+       "java/src/org/chromium/chrome/browser/actor/ActorForegroundService.java",
+       "java/src/org/chromium/chrome/browser/bare/backup/BareDirectService.java",
++      "java/src/org/chromium/chrome/browser/bare/BareSwipeWatchService.java",
+       "java/src/org/chromium/chrome/browser/app/bluetooth/BluetoothNotificationService.java",
+       "java/src/org/chromium/chrome/browser/app/serial/SerialNotificationService.java",
+       "java/src/org/chromium/chrome/browser/app/usb/UsbNotificationService.java",
+diff --git a/chrome/android/chrome_java_sources.gni b/chrome/android/chrome_java_sources.gni
+index 97980e7..444d634 100644
+--- a/chrome/android/chrome_java_sources.gni
++++ b/chrome/android/chrome_java_sources.gni
+@@ -293,6 +293,7 @@ chrome_java_sources = [
+   "java/src/org/chromium/chrome/browser/bare/BareClearOnExit.java",
+   "java/src/org/chromium/chrome/browser/bare/BareDiagnostics.java",
+   "java/src/org/chromium/chrome/browser/bare/BareClearVeil.java",
++  "java/src/org/chromium/chrome/browser/bare/BareSwipeWatchServiceImpl.java",
+   "java/src/org/chromium/chrome/browser/bare/BareFrostBackdrop.java",
+   "java/src/org/chromium/chrome/browser/bare/BareAddressBarPreviewView.java",
+   "java/src/org/chromium/chrome/browser/bare/BareGoldenGateView.java",
+diff --git a/chrome/android/java/AndroidManifest.xml b/chrome/android/java/AndroidManifest.xml
+index a3579b0..a4b7431 100644
+--- a/chrome/android/java/AndroidManifest.xml
++++ b/chrome/android/java/AndroidManifest.xml
+@@ -1093,6 +1093,11 @@ by a child template that "extends" this file.
+             android:foregroundServiceType="connectedDevice" android:exported="false">
+         </service>
+ 
++        <!-- Bare: hears Bare being swiped from the recent apps screen, for Clear on exit. -->
++        <service android:name="org.chromium.chrome.browser.bare.BareSwipeWatchService"
++            android:stopWithTask="false" android:exported="false">
++        </service>
++
+         <!-- Download broadcast manager service -->
+         <service android:name="org.chromium.chrome.browser.download.DownloadBroadcastManager"
+             android:exported="false">
+diff --git a/chrome/android/java/res/xml/bare_clear_on_exit_preferences.xml b/chrome/android/java/res/xml/bare_clear_on_exit_preferences.xml
+index 354ca7c..c9890cd 100644
+--- a/chrome/android/java/res/xml/bare_clear_on_exit_preferences.xml
++++ b/chrome/android/java/res/xml/bare_clear_on_exit_preferences.xml
+@@ -19,6 +19,12 @@ found in the LICENSE file.
+         android:title="@string/bare_leave_as_exit_title"
+         android:summary="@string/bare_leave_as_exit_summary" />
+ 
++    <org.chromium.components.browser_ui.settings.ChromeSwitchPreference
++        android:key="bare_clear_on_swipe"
++        android:persistent="false"
++        android:title="@string/bare_clear_on_swipe_title"
++        android:summary="@string/bare_clear_on_swipe_summary" />
++
+     <org.chromium.components.browser_ui.settings.ChromeBaseCheckBoxPreference
+         android:key="bare_clear_history"
+         android:persistent="false"
+diff --git a/chrome/android/java/res_chromium_base/values/channel_constants.xml b/chrome/android/java/res_chromium_base/values/channel_constants.xml
+index 0b90421..ac677ed 100644
+--- a/chrome/android/java/res_chromium_base/values/channel_constants.xml
++++ b/chrome/android/java/res_chromium_base/values/channel_constants.xml
+@@ -61,6 +61,8 @@ found in the LICENSE file.
+     <string name="bare_page_translation_title" translatable="false">Translate pages with Google</string>
+     <string name="bare_leave_as_exit_title" translatable="false">Treat leaving the app as exit</string>
+     <string name="bare_leave_as_exit_summary" translatable="false">When you leave Bare, what is selected below is cleared right away, as with Exit. Opening a file picker, the share sheet or Settings does not count as leaving.</string>
++    <string name="bare_clear_on_swipe_title" translatable="false">Clear when swiped from recent apps</string>
++    <string name="bare_clear_on_swipe_summary" translatable="false">Closing Bare from the recent apps screen clears what is selected below, as with Exit. If Android ends Bare before the clear is done, it finishes the next time you open Bare, before any page is shown.</string>
+     <string name="bare_clear_close_tabs_title" translatable="false">Close all tabs</string>
+     <string name="bare_clear_close_tabs_summary" translatable="false">Normal and private tabs. Nothing is kept to reopen.</string>
+     <string name="bare_translate_own_category" translatable="false">My own server</string>
+diff --git a/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java b/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
+index e2aede4..f61f2cf 100644
+--- a/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
++++ b/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
+@@ -115,6 +115,7 @@ import org.chromium.chrome.browser.auxiliary_search.module.AuxiliarySearchModule
+ import org.chromium.chrome.browser.back_press.BackPressManager;
+ import org.chromium.chrome.browser.bare.BareClearOnExit;
+ import org.chromium.chrome.browser.bare.BareClearVeil;
++import org.chromium.chrome.browser.bare.BareSwipeWatchServiceImpl;
+ import org.chromium.chrome.browser.bare.BareNewTabRise;
+ import org.chromium.chrome.browser.back_press.MinimizeAppAndCloseTabBackPressHandler;
+ import org.chromium.chrome.browser.back_press.MinimizeAppAndCloseTabBackPressHandler.MinimizeAppAndCloseTabType;
+@@ -5939,6 +5940,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+     public void onStart() {
+         try (TraceEvent e = TraceEvent.scoped("ChromeTabbedActivity.onStart")) {
+             super.onStart();
++            checkSwipedAway();
+             if (BareClearVeil.isPending()) {
+                 BareClearVeil.show(this);
+                 finishInterruptedClear();
+@@ -5946,6 +5948,35 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+         }
+     }
+ 
++    /** Whether this process has already looked at how the one before it ended. */
++    private static boolean sSwipeChecked;
++
++    /**
++     * Bare: with "Clear when swiped from recent apps" on. The first start of a process asks whether
++     * the previous one was swiped away while it had something to clear, and if so covers the
++     * window and clears before any restored page shows. Any later start is a return to Bare, which
++     * means it was not swiped away. Either way the watch service is started again for next time.
++     */
++    private void checkSwipedAway() {
++        if (!sSwipeChecked) {
++            sSwipeChecked = true;
++            if (BareClearOnExit.consumeSwipedAway(this)) {
++                BareClearVeil.begin(this, /* showNow= */ false);
++            }
++        } else {
++            BareClearOnExit.disarmSwipe();
++        }
++        BareSwipeWatchServiceImpl.watch(this);
++    }
++
++    /** Bare: going to the background with the swipe option on arms the check above. */
++    private void armSwipeIfLeaving() {
++        if (isFinishing() || isChangingConfigurations() || !areTabModelsInitialized()) return;
++        Profile profile = getCurrentTabModel().getProfile();
++        if (profile == null) return;
++        BareClearOnExit.armSwipe(profile.getOriginalProfile());
++    }
++
+     /** Set when Bare starts another screen itself, so that going there is not leaving the app. */
+     private boolean mStartedOtherScreen;
+ 
+@@ -6009,6 +6040,15 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+         }
+         boolean closeTabs = BareClearOnExit.isCloseTabs();
+         if (closeTabs) BareClearOnExit.closeAllTabs(getTabModelSelector());
++        if (BareClearOnExit.takeSwipeClearPending()) {
++            // Swiped away last time: the data may still be there, so clear it under the cover.
++            // Marked running so a second call from onDeferredStartup leaves this one alone.
++            BareClearVeil.begin(this, /* showNow= */ true);
++            BareClearOnExit.clearThen(
++                    getProfileProviderSupplier().get().getOriginalProfile(),
++                    () -> finishClear(closeTabs));
++            return;
++        }
+         finishClear(closeTabs);
+     }
+ 
+@@ -6027,6 +6067,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+         try (TraceEvent e = TraceEvent.scoped("ChromeTabbedActivity.onStop")) {
+             super.onStop();
+             clearIfLeaving();
++            armSwipeIfLeaving();
+             if (mSendTabToSelfGestureDetector != null) {
+                 mSendTabToSelfGestureDetector.stop();
+             }
+diff --git a/chrome/android/java/src/org/chromium/chrome/browser/bare/BareClearOnExit.java b/chrome/android/java/src/org/chromium/chrome/browser/bare/BareClearOnExit.java
+index aa93706..aa4c494 100644
+--- a/chrome/android/java/src/org/chromium/chrome/browser/bare/BareClearOnExit.java
++++ b/chrome/android/java/src/org/chromium/chrome/browser/bare/BareClearOnExit.java
+@@ -4,6 +4,11 @@
+ 
+ package org.chromium.chrome.browser.bare;
+ 
++import android.app.ActivityManager;
++import android.app.ApplicationExitInfo;
++import android.content.Context;
++import android.os.Build;
++
+ import org.chromium.build.annotations.NullMarked;
+ import org.chromium.chrome.browser.browsing_data.BrowsingDataBridge;
+ import org.chromium.chrome.browser.browsing_data.BrowsingDataType;
+@@ -67,6 +72,93 @@ public final class BareClearOnExit {
+                 .writeBoolean(ChromePreferenceKeys.BARE_LEAVE_AS_EXIT, enabled);
+     }
+ 
++    /** Whether swiping Bare away from the recent apps screen counts as exit. */
++    public static boolean isClearOnSwipe() {
++        return ChromeSharedPreferences.getInstance()
++                .readBoolean(ChromePreferenceKeys.BARE_CLEAR_ON_SWIPE, false);
++    }
++
++    public static void setClearOnSwipe(boolean enabled) {
++        ChromeSharedPreferences.getInstance()
++                .writeBoolean(ChromePreferenceKeys.BARE_CLEAR_ON_SWIPE, enabled);
++        if (!enabled) disarmSwipe();
++    }
++
++    /**
++     * Called when Bare goes to the background. If it is then swiped away, either the watch service
++     * clears straight away or the next start finds the flag still set and clears then.
++     */
++    public static void armSwipe(Profile profile) {
++        if (!isClearOnSwipe() || !hasWork(profile)) return;
++        ChromeSharedPreferences.getInstance()
++                .writeBoolean(ChromePreferenceKeys.BARE_CLEAR_SWIPE_ARMED, true);
++    }
++
++    /** Bare came back, or the swipe clear is done: nothing left to do on the next start. */
++    public static void disarmSwipe() {
++        ChromeSharedPreferences.getInstance()
++                .writeBoolean(ChromePreferenceKeys.BARE_CLEAR_SWIPE_ARMED, false);
++    }
++
++    public static boolean isSwipeArmed() {
++        return ChromeSharedPreferences.getInstance()
++                .readBoolean(ChromePreferenceKeys.BARE_CLEAR_SWIPE_ARMED, false);
++    }
++
++    /**
++     * On the first start of a process: whether the one before it was swiped away while armed. If
++     * so, the swipe clear is marked pending for the start to carry out. The armed flag is cleared
++     * either way.
++     */
++    public static boolean consumeSwipedAway(Context context) {
++        boolean armed = isSwipeArmed();
++        disarmSwipe();
++        if (!armed || !isClearOnSwipe() || !lastExitWasSwipe(context)) return false;
++        ChromeSharedPreferences.getInstance()
++                .writeBoolean(ChromePreferenceKeys.BARE_CLEAR_SWIPE_PENDING, true);
++        return true;
++    }
++
++    /** Reads and clears the mark {@link #consumeSwipedAway} left. */
++    public static boolean takeSwipeClearPending() {
++        boolean pending =
++                ChromeSharedPreferences.getInstance()
++                        .readBoolean(ChromePreferenceKeys.BARE_CLEAR_SWIPE_PENDING, false);
++        if (pending) {
++            ChromeSharedPreferences.getInstance()
++                    .writeBoolean(ChromePreferenceKeys.BARE_CLEAR_SWIPE_PENDING, false);
++        }
++        return pending;
++    }
++
++    /**
++     * Whether the browser process last ended because its task was removed from recents.
++     *
++     * <p>A process that Android ended to free memory is not a swipe and clears nothing. AOSP
++     * records a removed task as requested by the user with the description "remove task"; some
++     * manufacturers use descriptions of their own, which the word checks below try to catch.
++     * Before Android 11 there is no record to read, so an armed process that died is treated as
++     * swiped: clearing too often is the safer mistake here.
++     */
++    private static boolean lastExitWasSwipe(Context context) {
++        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return true;
++        ActivityManager manager = context.getSystemService(ActivityManager.class);
++        if (manager == null) return true;
++        String browserProcess = context.getPackageName();
++        for (ApplicationExitInfo info : manager.getHistoricalProcessExitReasons(null, 0, 16)) {
++            if (!browserProcess.equals(info.getProcessName())) continue;
++            // The newest entry for the browser process comes first.
++            if (info.getReason() == ApplicationExitInfo.REASON_USER_REQUESTED) return true;
++            String description = info.getDescription();
++            if (description == null) return false;
++            String lower = description.toLowerCase(java.util.Locale.ROOT);
++            return lower.contains("remove task")
++                    || lower.contains("removetask")
++                    || lower.contains("swipe");
++        }
++        return true;
++    }
++
+     /** Whether exiting also closes every tab, in both normal and private browsing. */
+     public static boolean isCloseTabs() {
+         return ChromeSharedPreferences.getInstance()
+diff --git a/chrome/android/java/src/org/chromium/chrome/browser/bare/BareSwipeWatchService.java b/chrome/android/java/src/org/chromium/chrome/browser/bare/BareSwipeWatchService.java
+new file mode 100644
+index 0000000..05b150b
+--- /dev/null
++++ b/chrome/android/java/src/org/chromium/chrome/browser/bare/BareSwipeWatchService.java
+@@ -0,0 +1,21 @@
++// Copyright 2026 The Chromium Authors
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++package org.chromium.chrome.browser.bare;
++
++import org.chromium.base.SplitCompatService;
++import org.chromium.build.annotations.IdentifierNameString;
++import org.chromium.build.annotations.NullMarked;
++
++/** Hears Bare being removed from the recent apps screen. Loads the Impl. */
++@NullMarked
++public class BareSwipeWatchService extends SplitCompatService {
++    @SuppressWarnings("FieldCanBeFinal") // @IdentifierNameString requires non-final
++    private static @IdentifierNameString String sImplClassName =
++            "org.chromium.chrome.browser.bare.BareSwipeWatchServiceImpl";
++
++    public BareSwipeWatchService() {
++        super(sImplClassName);
++    }
++}
+diff --git a/chrome/android/java/src/org/chromium/chrome/browser/bare/BareSwipeWatchServiceImpl.java b/chrome/android/java/src/org/chromium/chrome/browser/bare/BareSwipeWatchServiceImpl.java
+new file mode 100644
+index 0000000..7c6d9ff
+--- /dev/null
++++ b/chrome/android/java/src/org/chromium/chrome/browser/bare/BareSwipeWatchServiceImpl.java
+@@ -0,0 +1,75 @@
++// Copyright 2026 The Chromium Authors
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++package org.chromium.chrome.browser.bare;
++
++import android.app.Service;
++import android.content.Context;
++import android.content.Intent;
++import android.os.IBinder;
++
++import org.chromium.base.Log;
++import org.chromium.base.SplitCompatService;
++import org.chromium.build.annotations.NullMarked;
++import org.chromium.build.annotations.Nullable;
++import org.chromium.chrome.browser.profiles.Profile;
++import org.chromium.chrome.browser.profiles.ProfileManager;
++
++/**
++ * A plain started service whose only job is {@link #onTaskRemoved}, which Android calls when the
++ * user swipes Bare away from the recent apps screen.
++ *
++ * <p>It is started while Bare is in the foreground, when starting a service is always allowed, and
++ * holds no notification. Android stops it on its own a little while after Bare goes to the
++ * background, and may end the process right after a swipe before the clear is done. Neither loses
++ * anything: the armed flag stays set until the clear has finished, and the next start finishes it
++ * before any page is shown.
++ */
++@NullMarked
++public class BareSwipeWatchServiceImpl extends SplitCompatService.Impl {
++    private static final String TAG = "BareSwipeWatch";
++
++    /** Starts watching if the option is on. Call from the foreground only. */
++    public static void watch(Context context) {
++        if (!BareClearOnExit.isClearOnSwipe()) return;
++        try {
++            context.startService(new Intent(context, BareSwipeWatchService.class));
++        } catch (IllegalStateException | SecurityException e) {
++            // Not allowed right now. The next start still catches the swipe.
++            Log.w(TAG, "Could not start the swipe watch", e);
++        }
++    }
++
++    @Override
++    public int onStartCommand(@Nullable Intent intent, int flags, int startId) {
++        if (!BareClearOnExit.isClearOnSwipe()) {
++            getService().stopSelf();
++        }
++        // Nothing to pick up again if Android ends it.
++        return Service.START_NOT_STICKY;
++    }
++
++    @Override
++    public void onTaskRemoved(Intent rootIntent) {
++        if (!BareClearOnExit.isSwipeArmed() || !ProfileManager.isInitialized()) {
++            getService().stopSelf();
++            return;
++        }
++        Profile profile = ProfileManager.getLastUsedRegularProfile().getOriginalProfile();
++        boolean closeTabs = BareClearOnExit.isCloseTabs();
++        BareClearOnExit.clearThen(
++                profile,
++                () -> {
++                    // Tabs are closed by the next start, which still finds the flag set. With
++                    // nothing more to do, the next start has no reason to cover anything.
++                    if (!closeTabs) BareClearOnExit.disarmSwipe();
++                    getService().stopSelf();
++                });
++    }
++
++    @Override
++    public @Nullable IBinder onBind(Intent intent) {
++        return null;
++    }
++}
+diff --git a/chrome/android/java/src/org/chromium/chrome/browser/bare/settings/BareClearOnExitSettings.java b/chrome/android/java/src/org/chromium/chrome/browser/bare/settings/BareClearOnExitSettings.java
+index a01d7e9..5820908 100644
+--- a/chrome/android/java/src/org/chromium/chrome/browser/bare/settings/BareClearOnExitSettings.java
++++ b/chrome/android/java/src/org/chromium/chrome/browser/bare/settings/BareClearOnExitSettings.java
+@@ -65,6 +65,14 @@ public class BareClearOnExitSettings extends ChromeBaseSettingsFragment {
+                     BareClearOnExit.setLeaveAsExit((boolean) newValue);
+                     return true;
+                 });
++        ChromeSwitchPreference swipe = findPreference("bare_clear_on_swipe");
++        assert swipe != null;
++        swipe.setChecked(BareClearOnExit.isClearOnSwipe());
++        swipe.setOnPreferenceChangeListener(
++                (preference, newValue) -> {
++                    BareClearOnExit.setClearOnSwipe((boolean) newValue);
++                    return true;
++                });
+         CheckBoxPreference closeTabs = (CheckBoxPreference) findPreference("bare_clear_close_tabs");
+         assert closeTabs != null;
+         closeTabs.setChecked(BareClearOnExit.isCloseTabs());
+diff --git a/chrome/browser/bare/backup/backup_settings.cc b/chrome/browser/bare/backup/backup_settings.cc
+index 13b60c8..2e50a4d 100644
+--- a/chrome/browser/bare/backup/backup_settings.cc
++++ b/chrome/browser/bare/backup/backup_settings.cc
+@@ -387,6 +387,7 @@ constexpr Setting kSettings[] = {
+     {P, kSetup, "bare.clear_on_exit_types", kInt, IntRange<0, 63>},
+     {A, kSetup, "Bare.ClearOnExit.CloseTabs", kBool, AnyBool},
+     {A, kSetup, "Bare.ClearOnExit.LeaveAsExit", kBool, AnyBool},
++    {A, kSetup, "Bare.ClearOnExit.OnSwipe", kBool, AnyBool},
+     {P, kSetup, "enable_do_not_track", kBool, AnyBool},
+     {P, kSetup, "https_only_mode_enabled", kBool, AnyBool},
+     {P, kSetup, "profile.cookie_controls_mode", kInt, IntRange<0, 2>},
+diff --git a/chrome/browser/preferences/android/java/src/org/chromium/chrome/browser/preferences/ChromePreferenceKeys.java b/chrome/browser/preferences/android/java/src/org/chromium/chrome/browser/preferences/ChromePreferenceKeys.java
+index 1a2acf1..ca19e05 100644
+--- a/chrome/browser/preferences/android/java/src/org/chromium/chrome/browser/preferences/ChromePreferenceKeys.java
++++ b/chrome/browser/preferences/android/java/src/org/chromium/chrome/browser/preferences/ChromePreferenceKeys.java
+@@ -475,6 +475,12 @@ public final class ChromePreferenceKeys {
+     public static final String BARE_LEAVE_AS_EXIT = "Bare.ClearOnExit.LeaveAsExit";
+     public static final String BARE_CLEAR_CLOSE_TABS = "Bare.ClearOnExit.CloseTabs";
+     public static final String BARE_CLEAR_VEIL_PENDING = "Bare.ClearOnExit.VeilPending";
++    /** Whether removing Bare from the recent apps screen clears what Clear on exit names. */
++    public static final String BARE_CLEAR_ON_SWIPE = "Bare.ClearOnExit.OnSwipe";
++    /** Set while Bare is in the background with something to clear if it is swiped away. */
++    public static final String BARE_CLEAR_SWIPE_ARMED = "Bare.ClearOnExit.SwipeArmed";
++    /** Set when a start has found Bare was swiped away and the clear has not finished yet. */
++    public static final String BARE_CLEAR_SWIPE_PENDING = "Bare.ClearOnExit.SwipePending";
+ 
+     /** Whether the vertical tabs drawer shows its tabs as a grid, two to a row. */
+     public static final String BARE_VERTICAL_TABS_GRID = "Chrome.Bare.VerticalTabsGrid";
+@@ -1464,6 +1470,9 @@ public final class ChromePreferenceKeys {
+                 BARE_LEAVE_AS_EXIT,
+                 BARE_CLEAR_CLOSE_TABS,
+                 BARE_CLEAR_VEIL_PENDING,
++                BARE_CLEAR_ON_SWIPE,
++                BARE_CLEAR_SWIPE_ARMED,
++                BARE_CLEAR_SWIPE_PENDING,
+                 BARE_LAUNCHER_ICON,
+                 BARE_VERTICAL_TABS_GRID,
+                 BARE_NEW_ICON_UNLOCKED,

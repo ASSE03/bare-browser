@@ -1,0 +1,156 @@
+diff --git a/chrome/android/chrome_java_resources.gni b/chrome/android/chrome_java_resources.gni
+index ebd74d2..d3ae76f 100644
+--- a/chrome/android/chrome_java_resources.gni
++++ b/chrome/android/chrome_java_resources.gni
+@@ -471,6 +471,7 @@ chrome_java_resources = [
+   "java/res/animator/bare_settings_close_exit.xml",
+   "java/res/drawable/bare_leaf.xml",
+   "java/res/drawable/ic_bare_task_manager.xml",
++  "java/res/drawable/ic_bare_bookmarks.xml",
+   "java/res/drawable/bare_wing_lower.xml",
+   "java/res/drawable/bare_wing_upper.xml",
+   "java/res/drawable/bare_wordmark_on_light.xml",
+diff --git a/chrome/android/java/res/drawable/ic_bare_bookmarks.xml b/chrome/android/java/res/drawable/ic_bare_bookmarks.xml
+new file mode 100644
+index 0000000..0949f03
+--- /dev/null
++++ b/chrome/android/java/res/drawable/ic_bare_bookmarks.xml
+@@ -0,0 +1,16 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++Copyright 2026 The Chromium Authors
++Use of this source code is governed by a BSD-style license that can be
++found in the LICENSE file.
++-->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24"
++    android:tint="?attr/colorControlNormal">
++    <path
++        android:fillColor="@android:color/white"
++        android:pathData="M19,18l2,1V3c0,-1.1 -0.9,-2 -2,-2H8.99C7.89,1 7,1.9 7,3h10c1.1,0 2,0.9 2,2v13zM15,5H5c-1.1,0 -1.99,0.9 -1.99,2L3,23l7,-3 7,3V7c0,-1.1 -0.9,-2 -2,-2z"/>
++</vector>
+diff --git a/chrome/android/java/src/org/chromium/chrome/browser/bare/BareToolbarActionCatalogue.java b/chrome/android/java/src/org/chromium/chrome/browser/bare/BareToolbarActionCatalogue.java
+index 4c5d1a7..5b65942 100644
+--- a/chrome/android/java/src/org/chromium/chrome/browser/bare/BareToolbarActionCatalogue.java
++++ b/chrome/android/java/src/org/chromium/chrome/browser/bare/BareToolbarActionCatalogue.java
+@@ -70,7 +70,8 @@ public class BareToolbarActionCatalogue implements Destroyable {
+             Runnable back,
+             Runnable forward,
+             Runnable verticalTabs,
+-            Runnable taskManager) {
++            Runnable taskManager,
++            Runnable bookmarks) {
+         registerPlain(
+                 registry,
+                 ActionId.FIND_IN_PAGE,
+@@ -109,6 +110,14 @@ public class BareToolbarActionCatalogue implements Destroyable {
+                 R.drawable.ic_bare_task_manager,
+                 R.string.menu_task_manager,
+                 taskManager);
++        // The list of every bookmark, the same screen the app menu's Bookmarks item opens. The
++        // star next to it in the catalogue only adds or edits the bookmark for the current page.
++        registerPlain(
++                registry,
++                ActionId.BOOKMARKS_MANAGER,
++                R.drawable.ic_bare_bookmarks,
++                R.string.menu_bookmarks,
++                bookmarks);
+         adapt(source, tabProvider, registry, context, ActionId.SHARE, AdaptiveToolbarButtonVariant.SHARE);
+         adapt(
+                 source,
+diff --git a/chrome/android/java/src/org/chromium/chrome/browser/bare/settings/BareToolbarActionUi.java b/chrome/android/java/src/org/chromium/chrome/browser/bare/settings/BareToolbarActionUi.java
+index 426cf63..dbf49ef 100644
+--- a/chrome/android/java/src/org/chromium/chrome/browser/bare/settings/BareToolbarActionUi.java
++++ b/chrome/android/java/src/org/chromium/chrome/browser/bare/settings/BareToolbarActionUi.java
+@@ -58,6 +58,8 @@ public final class BareToolbarActionUi {
+                 return R.string.bare_toolbar_action_vertical_tabs;
+             case ActionId.TASK_MANAGER:
+                 return R.string.menu_task_manager;
++            case ActionId.BOOKMARKS_MANAGER:
++                return R.string.menu_bookmarks;
+             default:
+                 return R.string.bare_toolbar_action_tab_count;
+         }
+@@ -94,6 +96,8 @@ public final class BareToolbarActionUi {
+                 return R.drawable.ic_bare_vertical_tabs;
+             case ActionId.TASK_MANAGER:
+                 return R.drawable.ic_bare_task_manager;
++            case ActionId.BOOKMARKS_MANAGER:
++                return R.drawable.ic_bare_bookmarks;
+             default:
+                 return R.drawable.btn_tabswitcher_modern;
+         }
+diff --git a/chrome/android/java/src/org/chromium/chrome/browser/tabbed_mode/TabbedRootUiCoordinator.java b/chrome/android/java/src/org/chromium/chrome/browser/tabbed_mode/TabbedRootUiCoordinator.java
+index 81e5f4a..e45e060 100644
+--- a/chrome/android/java/src/org/chromium/chrome/browser/tabbed_mode/TabbedRootUiCoordinator.java
++++ b/chrome/android/java/src/org/chromium/chrome/browser/tabbed_mode/TabbedRootUiCoordinator.java
+@@ -1234,7 +1234,15 @@ public class TabbedRootUiCoordinator extends RootUiCoordinator {
+                                     // coordinator's own handler does not reach.
+                                     ((ChromeActivity) mActivity)
+                                             .onMenuOrKeyboardAction(
+-                                                    R.id.task_manager, false, null, null));
++                                                    R.id.task_manager, false, null, null),
++                            () ->
++                                    // The bookmark manager is opened by the tabbed activity too.
++                                    ((ChromeActivity) mActivity)
++                                            .onMenuOrKeyboardAction(
++                                                    R.id.all_bookmarks_menu_id,
++                                                    false,
++                                                    null,
++                                                    null));
+         }
+     }
+ 
+diff --git a/chrome/android/junit/src/org/chromium/chrome/browser/bare/BareToolbarActionCatalogueUnitTest.java b/chrome/android/junit/src/org/chromium/chrome/browser/bare/BareToolbarActionCatalogueUnitTest.java
+index 6ded8fa..3d225b2 100644
+--- a/chrome/android/junit/src/org/chromium/chrome/browser/bare/BareToolbarActionCatalogueUnitTest.java
++++ b/chrome/android/junit/src/org/chromium/chrome/browser/bare/BareToolbarActionCatalogueUnitTest.java
+@@ -57,6 +57,7 @@ public class BareToolbarActionCatalogueUnitTest {
+                 () -> mBacks++,
+                 () -> mForwards++,
+                 () -> mVerticalTabs++,
++                () -> {},
+                 () -> {});
+     }
+ 
+diff --git a/chrome/browser/ui/android/actions/java/src/org/chromium/chrome/browser/ui/actions/ActionId.java b/chrome/browser/ui/android/actions/java/src/org/chromium/chrome/browser/ui/actions/ActionId.java
+index 4e05073..623910f 100644
+--- a/chrome/browser/ui/android/actions/java/src/org/chromium/chrome/browser/ui/actions/ActionId.java
++++ b/chrome/browser/ui/android/actions/java/src/org/chromium/chrome/browser/ui/actions/ActionId.java
+@@ -31,6 +31,7 @@ import java.lang.annotation.Target;
+     ActionId.FORWARD_BUTTON,
+     ActionId.VERTICAL_TABS,
+     ActionId.TASK_MANAGER,
++    ActionId.BOOKMARKS_MANAGER,
+ })
+ @Retention(RetentionPolicy.SOURCE)
+ @Target(ElementType.TYPE_USE)
+@@ -52,4 +53,5 @@ public @interface ActionId {
+     int FORWARD_BUTTON = 13;
+     int VERTICAL_TABS = 14;
+     int TASK_MANAGER = 15;
++    int BOOKMARKS_MANAGER = 16;
+ }
+diff --git a/chrome/browser/ui/android/bottombar/java/src/org/chromium/chrome/browser/ui/bottombar/BareToolbarDefaults.java b/chrome/browser/ui/android/bottombar/java/src/org/chromium/chrome/browser/ui/bottombar/BareToolbarDefaults.java
+index 2e121c0..1d2892d 100644
+--- a/chrome/browser/ui/android/bottombar/java/src/org/chromium/chrome/browser/ui/bottombar/BareToolbarDefaults.java
++++ b/chrome/browser/ui/android/bottombar/java/src/org/chromium/chrome/browser/ui/bottombar/BareToolbarDefaults.java
+@@ -109,6 +109,7 @@ public final class BareToolbarDefaults {
+         ActionId.SHARE,
+         ActionId.TRANSLATE,
+         ActionId.BOOKMARK,
++        ActionId.BOOKMARKS_MANAGER,
+         ActionId.FIND_IN_PAGE,
+         ActionId.SEARCH,
+         ActionId.BACK_BUTTON,
+@@ -171,6 +172,7 @@ public final class BareToolbarDefaults {
+             case ActionId.FORWARD_BUTTON:
+             case ActionId.VERTICAL_TABS:
+             case ActionId.TASK_MANAGER:
++            case ActionId.BOOKMARKS_MANAGER:
+                 return true;
+             default:
+                 return false;
