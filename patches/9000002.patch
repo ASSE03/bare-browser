@@ -69,7 +69,7 @@ index 0b90421..ac677ed 100644
      <string name="bare_clear_close_tabs_summary" translatable="false">Normal and private tabs. Nothing is kept to reopen.</string>
      <string name="bare_translate_own_category" translatable="false">My own server</string>
 diff --git a/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java b/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
-index e2aede4..f61f2cf 100644
+index e2aede4..856913f 100644
 --- a/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
 +++ b/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
 @@ -115,6 +115,7 @@ import org.chromium.chrome.browser.auxiliary_search.module.AuxiliarySearchModule
@@ -124,23 +124,28 @@ index e2aede4..f61f2cf 100644
      /** Set when Bare starts another screen itself, so that going there is not leaving the app. */
      private boolean mStartedOtherScreen;
  
-@@ -6009,6 +6040,15 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+@@ -6008,6 +6039,20 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+             return;
          }
          boolean closeTabs = BareClearOnExit.isCloseTabs();
-         if (closeTabs) BareClearOnExit.closeAllTabs(getTabModelSelector());
 +        if (BareClearOnExit.takeSwipeClearPending()) {
 +            // Swiped away last time: the data may still be there, so clear it under the cover.
 +            // Marked running so a second call from onDeferredStartup leaves this one alone.
 +            BareClearVeil.begin(this, /* showNow= */ true);
++            if (closeTabs) {
++                // The new tab opens in the same step as the closing: a window left with no tab
++                // while the clear runs is closed by Chromium, which shut Bare on reopening.
++                BareClearOnExit.closeAllTabs(getTabModelSelector());
++                getTabCreator(/* incognito= */ false).launchNtp(TabLaunchType.FROM_CHROME_UI);
++            }
 +            BareClearOnExit.clearThen(
-+                    getProfileProviderSupplier().get().getOriginalProfile(),
-+                    () -> finishClear(closeTabs));
++                    getProfileProviderSupplier().get().getOriginalProfile(), BareClearVeil::end);
 +            return;
 +        }
+         if (closeTabs) BareClearOnExit.closeAllTabs(getTabModelSelector());
          finishClear(closeTabs);
      }
- 
-@@ -6027,6 +6067,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+@@ -6027,6 +6072,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
          try (TraceEvent e = TraceEvent.scoped("ChromeTabbedActivity.onStop")) {
              super.onStop();
              clearIfLeaving();
