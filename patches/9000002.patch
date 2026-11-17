@@ -69,7 +69,7 @@ index 0b90421..ac677ed 100644
      <string name="bare_clear_close_tabs_summary" translatable="false">Normal and private tabs. Nothing is kept to reopen.</string>
      <string name="bare_translate_own_category" translatable="false">My own server</string>
 diff --git a/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java b/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
-index e2aede4..856913f 100644
+index e2aede4..2b6f70f 100644
 --- a/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
 +++ b/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
 @@ -115,6 +115,7 @@ import org.chromium.chrome.browser.auxiliary_search.module.AuxiliarySearchModule
@@ -80,7 +80,16 @@ index e2aede4..856913f 100644
  import org.chromium.chrome.browser.bare.BareNewTabRise;
  import org.chromium.chrome.browser.back_press.MinimizeAppAndCloseTabBackPressHandler;
  import org.chromium.chrome.browser.back_press.MinimizeAppAndCloseTabBackPressHandler.MinimizeAppAndCloseTabType;
-@@ -5939,6 +5940,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+@@ -4073,6 +4074,8 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+                         if (mMultiInstanceManager != null) {
+                             mMultiInstanceManager.onTabStateInitialized();
+                         }
++                        // Bare: an interrupted or swipe clear waits for every restored tab.
++                        finishInterruptedClear();
+                     }
+                 };
+         mTabModelSelector.addObserver(mTabModelSelectorObserver);
+@@ -5939,6 +5942,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
      public void onStart() {
          try (TraceEvent e = TraceEvent.scoped("ChromeTabbedActivity.onStart")) {
              super.onStart();
@@ -88,7 +97,7 @@ index e2aede4..856913f 100644
              if (BareClearVeil.isPending()) {
                  BareClearVeil.show(this);
                  finishInterruptedClear();
-@@ -5946,6 +5948,35 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+@@ -5946,6 +5950,35 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
          }
      }
  
@@ -124,7 +133,17 @@ index e2aede4..856913f 100644
      /** Set when Bare starts another screen itself, so that going there is not leaving the app. */
      private boolean mStartedOtherScreen;
  
-@@ -6008,6 +6039,20 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+@@ -6001,13 +6034,30 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+      * The cover stays up and onDeferredStartup calls this again.
+      */
+     private void finishInterruptedClear() {
++        // Tabs come back from disk a little at a time. Closing them before that is done would
++        // leave the rest to reappear, so this waits for onTabStateInitialized to call it again.
+         if (!BareClearVeil.isPending()
+                 || BareClearVeil.isRunning()
+                 || !areTabModelsInitialized()
++                || !getTabModelSelector().isTabStateInitialized()
+                 || getProfileProviderSupplier().get() == null) {
              return;
          }
          boolean closeTabs = BareClearOnExit.isCloseTabs();
@@ -145,7 +164,7 @@ index e2aede4..856913f 100644
          if (closeTabs) BareClearOnExit.closeAllTabs(getTabModelSelector());
          finishClear(closeTabs);
      }
-@@ -6027,6 +6072,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+@@ -6027,6 +6077,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
          try (TraceEvent e = TraceEvent.scoped("ChromeTabbedActivity.onStop")) {
              super.onStop();
              clearIfLeaving();
