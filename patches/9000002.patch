@@ -69,7 +69,7 @@ index 0b90421..ac677ed 100644
      <string name="bare_clear_close_tabs_summary" translatable="false">Normal and private tabs. Nothing is kept to reopen.</string>
      <string name="bare_translate_own_category" translatable="false">My own server</string>
 diff --git a/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java b/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
-index e2aede4..2b6f70f 100644
+index e2aede4..6fe075c 100644
 --- a/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
 +++ b/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
 @@ -115,6 +115,7 @@ import org.chromium.chrome.browser.auxiliary_search.module.AuxiliarySearchModule
@@ -133,7 +133,7 @@ index e2aede4..2b6f70f 100644
      /** Set when Bare starts another screen itself, so that going there is not leaving the app. */
      private boolean mStartedOtherScreen;
  
-@@ -6001,13 +6034,30 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+@@ -6001,15 +6034,34 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
       * The cover stays up and onDeferredStartup calls this again.
       */
      private void finishInterruptedClear() {
@@ -146,25 +146,32 @@ index e2aede4..2b6f70f 100644
                  || getProfileProviderSupplier().get() == null) {
              return;
          }
-         boolean closeTabs = BareClearOnExit.isCloseTabs();
-+        if (BareClearOnExit.takeSwipeClearPending()) {
-+            // Swiped away last time: the data may still be there, so clear it under the cover.
-+            // Marked running so a second call from onDeferredStartup leaves this one alone.
-+            BareClearVeil.begin(this, /* showNow= */ true);
-+            if (closeTabs) {
-+                // The new tab opens in the same step as the closing: a window left with no tab
-+                // while the clear runs is closed by Chromium, which shut Bare on reopening.
-+                BareClearOnExit.closeAllTabs(getTabModelSelector());
-+                getTabCreator(/* incognito= */ false).launchNtp(TabLaunchType.FROM_CHROME_UI);
-+            }
+-        boolean closeTabs = BareClearOnExit.isCloseTabs();
+-        if (closeTabs) BareClearOnExit.closeAllTabs(getTabModelSelector());
+-        finishClear(closeTabs);
++        boolean swiped = BareClearOnExit.takeSwipeClearPending();
++        // Swiped away last time: the data may still be there, so clear it under the cover.
++        // Marked running so a second call from onDeferredStartup leaves this one alone.
++        if (swiped) BareClearVeil.begin(this, /* showNow= */ true);
++        if (BareClearOnExit.isCloseTabs()) {
++            // The new tab opens before the old ones close. Chromium closes a window that is left
++            // with no tab at all, even for a moment, which shut Bare as soon as it reopened.
++            BareClearOnExit.replaceAllTabs(
++                    getTabModelSelector(),
++                    () ->
++                            getTabCreator(/* incognito= */ false)
++                                    .launchNtp(TabLaunchType.FROM_CHROME_UI));
++        }
++        if (swiped) {
 +            BareClearOnExit.clearThen(
 +                    getProfileProviderSupplier().get().getOriginalProfile(), BareClearVeil::end);
 +            return;
 +        }
-         if (closeTabs) BareClearOnExit.closeAllTabs(getTabModelSelector());
-         finishClear(closeTabs);
++        BareClearVeil.end();
      }
-@@ -6027,6 +6077,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+ 
+     /** Opens a fresh tab if every tab was closed, then lets the cover go. */
+@@ -6027,6 +6079,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
          try (TraceEvent e = TraceEvent.scoped("ChromeTabbedActivity.onStop")) {
              super.onStop();
              clearIfLeaving();
@@ -173,7 +180,7 @@ index e2aede4..2b6f70f 100644
                  mSendTabToSelfGestureDetector.stop();
              }
 diff --git a/chrome/android/java/src/org/chromium/chrome/browser/bare/BareClearOnExit.java b/chrome/android/java/src/org/chromium/chrome/browser/bare/BareClearOnExit.java
-index aa93706..aa4c494 100644
+index aa93706..8e7de91 100644
 --- a/chrome/android/java/src/org/chromium/chrome/browser/bare/BareClearOnExit.java
 +++ b/chrome/android/java/src/org/chromium/chrome/browser/bare/BareClearOnExit.java
 @@ -4,6 +4,11 @@
@@ -188,7 +195,23 @@ index aa93706..aa4c494 100644
  import org.chromium.build.annotations.NullMarked;
  import org.chromium.chrome.browser.browsing_data.BrowsingDataBridge;
  import org.chromium.chrome.browser.browsing_data.BrowsingDataType;
-@@ -67,6 +72,93 @@ public final class BareClearOnExit {
+@@ -12,11 +17,15 @@ import org.chromium.chrome.browser.preferences.ChromePreferenceKeys;
+ import org.chromium.chrome.browser.preferences.ChromeSharedPreferences;
+ import org.chromium.chrome.browser.preferences.Pref;
+ import org.chromium.chrome.browser.profiles.Profile;
++import org.chromium.chrome.browser.tab.Tab;
+ import org.chromium.chrome.browser.tabmodel.TabClosureParams;
+ import org.chromium.chrome.browser.tabmodel.TabModel;
+ import org.chromium.chrome.browser.tabmodel.TabModelSelector;
+ import org.chromium.components.user_prefs.UserPrefs;
+ 
++import java.util.ArrayList;
++import java.util.List;
++
+ /**
+  * What the Exit item in the app menu deletes before the browser closes.
+  *
+@@ -67,6 +76,93 @@ public final class BareClearOnExit {
                  .writeBoolean(ChromePreferenceKeys.BARE_LEAVE_AS_EXIT, enabled);
      }
  
@@ -282,6 +305,42 @@ index aa93706..aa4c494 100644
      /** Whether exiting also closes every tab, in both normal and private browsing. */
      public static boolean isCloseTabs() {
          return ChromeSharedPreferences.getInstance()
+@@ -96,6 +192,35 @@ public final class BareClearOnExit {
+         }
+     }
+ 
++    /**
++     * Swaps every tab, normal and private, for the one {@code openNewTab} opens. The new tab comes
++     * first so the window never holds zero tabs, which Chromium answers by closing it.
++     */
++    public static void replaceAllTabs(TabModelSelector selector, Runnable openNewTab) {
++        List<List<Tab>> before = new ArrayList<>();
++        for (TabModel model : selector.getModels()) {
++            List<Tab> tabs = new ArrayList<>();
++            for (int i = 0; i < model.getCount(); i++) {
++                Tab tab = model.getTabAt(i);
++                if (tab != null) tabs.add(tab);
++            }
++            before.add(tabs);
++        }
++        openNewTab.run();
++        int index = 0;
++        for (TabModel model : selector.getModels()) {
++            List<Tab> tabs = before.get(index++);
++            if (tabs.isEmpty()) continue;
++            model.getTabRemover()
++                    .closeTabs(
++                            TabClosureParams.closeTabs(tabs)
++                                    .allowUndo(false)
++                                    .hideTabGroups(false)
++                                    .build(),
++                            /* allowDialog= */ false);
++        }
++    }
++
+     /** Returns the bitmask of types the user has chosen for this profile. */
+     public static int getSelection(Profile profile) {
+         return UserPrefs.get(profile).getInteger(Pref.CLEAR_ON_EXIT_TYPES);
 diff --git a/chrome/android/java/src/org/chromium/chrome/browser/bare/BareSwipeWatchService.java b/chrome/android/java/src/org/chromium/chrome/browser/bare/BareSwipeWatchService.java
 new file mode 100644
 index 0000000..05b150b
