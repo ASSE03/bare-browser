@@ -1,0 +1,55 @@
+diff --git a/chrome/android/java/src/org/chromium/chrome/browser/ui/ExclusiveAccessBubble.java b/chrome/android/java/src/org/chromium/chrome/browser/ui/ExclusiveAccessBubble.java
+index 4f68c53..1e1df55 100644
+--- a/chrome/android/java/src/org/chromium/chrome/browser/ui/ExclusiveAccessBubble.java
++++ b/chrome/android/java/src/org/chromium/chrome/browser/ui/ExclusiveAccessBubble.java
+@@ -26,6 +26,12 @@ import org.chromium.ui.base.DeviceInput;
+ public class ExclusiveAccessBubble {
+     private static final int EXCLUSIVE_ACCESS_SNACKBAR_DURATION_MS = 3800;
+ 
++    /**
++     * Bare: the notice shown on entering fullscreen ("To exit full screen, swipe from the top...")
++     * is not shown. Swiping from the top edge then Back still exits fullscreen.
++     */
++    private static final boolean SHOW_NOTICE = false;
++
+     private final ExclusiveAccessContext mParentContext;
+     private @Nullable Snackbar mSnackbar;
+     private final SnackbarManager.SnackbarController mSnackbarController =
+@@ -49,7 +55,7 @@ public class ExclusiveAccessBubble {
+ 
+     @CalledByNative
+     public void show() {
+-        if (mText == null || mSnackbar != null) {
++        if (!SHOW_NOTICE || mText == null || mSnackbar != null) {
+             return;
+         }
+         SnackbarManager snackbarManager = mParentContext.getSnackbarManager();
+diff --git a/chrome/android/java/src/org/chromium/chrome/browser/undo_tab_close_snackbar/UndoBarController.java b/chrome/android/java/src/org/chromium/chrome/browser/undo_tab_close_snackbar/UndoBarController.java
+index 1194b1f..acef8eb 100644
+--- a/chrome/android/java/src/org/chromium/chrome/browser/undo_tab_close_snackbar/UndoBarController.java
++++ b/chrome/android/java/src/org/chromium/chrome/browser/undo_tab_close_snackbar/UndoBarController.java
+@@ -35,6 +35,12 @@ import java.util.Queue;
+ @NullMarked
+ public abstract class UndoBarController
+         implements SnackbarManager.SnackbarController, UndoBarThrottle {
++    /**
++     * Bare: no "Tab closed, Undo" bar. A closing is committed at once, exactly as when the bar
++     * times out unanswered; closed pages stay in History.
++     */
++    private static final boolean SHOW_UNDO_BAR = false;
++
+     private final TokenHolder mThrottle = new TokenHolder(this::maybeProcessEvents);
+     protected final TabModelSelector mTabModelSelector;
+     protected final SnackbarManager.SnackbarManageable mSnackbarManageable;
+@@ -132,6 +138,11 @@ public abstract class UndoBarController
+         UndoActionData undoActionData =
+                 new UndoActionData(closedTabs, savedTabGroupSyncIds, umaType);
+ 
++        if (!SHOW_UNDO_BAR) {
++            onDismissNoAction(undoActionData);
++            return;
++        }
++
+         mSnackbarManageable
+                 .getSnackbarManager()
+                 .showSnackbar(

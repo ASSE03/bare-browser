@@ -1,8 +1,8 @@
 diff --git a/chrome/android/BUILD.gn b/chrome/android/BUILD.gn
-index b5877c4..8bac695 100644
+index f8ed652..4ad13c4 100644
 --- a/chrome/android/BUILD.gn
 +++ b/chrome/android/BUILD.gn
-@@ -2254,6 +2254,7 @@ if (_is_default_toolchain) {
+@@ -2264,6 +2264,7 @@ if (_is_default_toolchain) {
        "java/src/org/chromium/chrome/browser/GracefulShutdownService.java",
        "java/src/org/chromium/chrome/browser/actor/ActorForegroundService.java",
        "java/src/org/chromium/chrome/browser/bare/backup/BareDirectService.java",
@@ -11,10 +11,10 @@ index b5877c4..8bac695 100644
        "java/src/org/chromium/chrome/browser/app/serial/SerialNotificationService.java",
        "java/src/org/chromium/chrome/browser/app/usb/UsbNotificationService.java",
 diff --git a/chrome/android/chrome_java_sources.gni b/chrome/android/chrome_java_sources.gni
-index 97980e7..444d634 100644
+index 69de1e1..8abf571 100644
 --- a/chrome/android/chrome_java_sources.gni
 +++ b/chrome/android/chrome_java_sources.gni
-@@ -293,6 +293,7 @@ chrome_java_sources = [
+@@ -295,6 +295,7 @@ chrome_java_sources = [
    "java/src/org/chromium/chrome/browser/bare/BareClearOnExit.java",
    "java/src/org/chromium/chrome/browser/bare/BareDiagnostics.java",
    "java/src/org/chromium/chrome/browser/bare/BareClearVeil.java",
@@ -23,10 +23,10 @@ index 97980e7..444d634 100644
    "java/src/org/chromium/chrome/browser/bare/BareAddressBarPreviewView.java",
    "java/src/org/chromium/chrome/browser/bare/BareGoldenGateView.java",
 diff --git a/chrome/android/java/AndroidManifest.xml b/chrome/android/java/AndroidManifest.xml
-index a3579b0..a4b7431 100644
+index b1482d2..9fd71e2 100644
 --- a/chrome/android/java/AndroidManifest.xml
 +++ b/chrome/android/java/AndroidManifest.xml
-@@ -1093,6 +1093,11 @@ by a child template that "extends" this file.
+@@ -1095,6 +1095,11 @@ by a child template that "extends" this file.
              android:foregroundServiceType="connectedDevice" android:exported="false">
          </service>
  
@@ -56,10 +56,10 @@ index 354ca7c..c9890cd 100644
          android:key="bare_clear_history"
          android:persistent="false"
 diff --git a/chrome/android/java/res_chromium_base/values/channel_constants.xml b/chrome/android/java/res_chromium_base/values/channel_constants.xml
-index 0b90421..ac677ed 100644
+index 998b5ff..0613951 100644
 --- a/chrome/android/java/res_chromium_base/values/channel_constants.xml
 +++ b/chrome/android/java/res_chromium_base/values/channel_constants.xml
-@@ -61,6 +61,8 @@ found in the LICENSE file.
+@@ -75,6 +75,8 @@ found in the LICENSE file.
      <string name="bare_page_translation_title" translatable="false">Translate pages with Google</string>
      <string name="bare_leave_as_exit_title" translatable="false">Treat leaving the app as exit</string>
      <string name="bare_leave_as_exit_summary" translatable="false">When you leave Bare, what is selected below is cleared right away, as with Exit. Opening a file picker, the share sheet or Settings does not count as leaving.</string>
@@ -69,7 +69,7 @@ index 0b90421..ac677ed 100644
      <string name="bare_clear_close_tabs_summary" translatable="false">Normal and private tabs. Nothing is kept to reopen.</string>
      <string name="bare_translate_own_category" translatable="false">My own server</string>
 diff --git a/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java b/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
-index e2aede4..f61f2cf 100644
+index fae2c24..69609f7 100644
 --- a/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
 +++ b/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
 @@ -115,6 +115,7 @@ import org.chromium.chrome.browser.auxiliary_search.module.AuxiliarySearchModule
@@ -80,7 +80,7 @@ index e2aede4..f61f2cf 100644
  import org.chromium.chrome.browser.bare.BareNewTabRise;
  import org.chromium.chrome.browser.back_press.MinimizeAppAndCloseTabBackPressHandler;
  import org.chromium.chrome.browser.back_press.MinimizeAppAndCloseTabBackPressHandler.MinimizeAppAndCloseTabType;
-@@ -5939,6 +5940,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+@@ -6012,6 +6013,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
      public void onStart() {
          try (TraceEvent e = TraceEvent.scoped("ChromeTabbedActivity.onStart")) {
              super.onStart();
@@ -88,23 +88,23 @@ index e2aede4..f61f2cf 100644
              if (BareClearVeil.isPending()) {
                  BareClearVeil.show(this);
                  finishInterruptedClear();
-@@ -5946,6 +5948,35 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+@@ -6019,6 +6021,35 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
          }
      }
  
-+    /** Whether this process has already looked at how the one before it ended. */
-+    private static boolean sSwipeChecked;
++    /** Whether this window has already asked how Bare was left. */
++    private boolean mSwipeChecked;
 +
 +    /**
-+     * Bare: with "Clear when swiped from recent apps" on. The first start of a process asks whether
-+     * the previous one was swiped away while it had something to clear, and if so covers the
-+     * window and clears before any restored page shows. Any later start is a return to Bare, which
-+     * means it was not swiped away. Either way the watch service is started again for next time.
++     * Bare: with "Clear when swiped from recent apps" on. The first start of a window asks whether
++     * Bare was swiped away while it had something to clear, and if so covers the window and clears
++     * before any restored page shows. Any later start of the same window is a return to Bare,
++     * which means it was not swiped away. Either way the watch service is started again.
 +     */
 +    private void checkSwipedAway() {
-+        if (!sSwipeChecked) {
-+            sSwipeChecked = true;
-+            if (BareClearOnExit.consumeSwipedAway(this)) {
++        if (!mSwipeChecked) {
++            mSwipeChecked = true;
++            if (BareClearOnExit.consumeSwipedAway(getSavedInstanceState() == null)) {
 +                BareClearVeil.begin(this, /* showNow= */ false);
 +            }
 +        } else {
@@ -124,23 +124,46 @@ index e2aede4..f61f2cf 100644
      /** Set when Bare starts another screen itself, so that going there is not leaving the app. */
      private boolean mStartedOtherScreen;
  
-@@ -6009,6 +6040,15 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+@@ -6089,6 +6120,9 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
          }
-         boolean closeTabs = BareClearOnExit.isCloseTabs();
-         if (closeTabs) BareClearOnExit.closeAllTabs(getTabModelSelector());
-+        if (BareClearOnExit.takeSwipeClearPending()) {
-+            // Swiped away last time: the data may still be there, so clear it under the cover.
-+            // Marked running so a second call from onDeferredStartup leaves this one alone.
-+            BareClearVeil.begin(this, /* showNow= */ true);
-+            BareClearOnExit.clearThen(
-+                    getProfileProviderSupplier().get().getOriginalProfile(),
-+                    () -> finishClear(closeTabs));
-+            return;
+         mInterruptedClearTaken = true;
+         Profile original = profileProvider.getOriginalProfile();
++        // Bare: swiped away from recent apps last time. The data may still be there, so it is
++        // cleared again in full rather than only resumed.
++        boolean swiped = BareClearOnExit.takeSwipeClearPending();
+         if (!BareClearVeil.isPending()) {
+             BareClearOnExit.resumeIfInterrupted(original, () -> {});
+             return;
+@@ -6097,13 +6131,25 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+         int[] stepsLeft = {2};
+         Runnable step =
+                 () -> {
+-                    if (--stepsLeft[0] == 0) finishClear(closeTabs);
++                    if (--stepsLeft[0] == 0) BareClearVeil.end();
+                 };
+-        BareClearOnExit.resumeIfInterrupted(original, step);
++        if (swiped) {
++            BareClearOnExit.clearThen(original, step);
++        } else {
++            BareClearOnExit.resumeIfInterrupted(original, step);
 +        }
-         finishClear(closeTabs);
+         TabModelUtils.runOnTabStateInitialized(
+                 getTabModelSelector(),
+                 (selector) -> {
+-                    if (closeTabs) BareClearOnExit.closeAllTabs(selector);
++                    // The new tab opens before the old ones close. Chromium closes a window left
++                    // with no tab at all, even for a moment, which shut Bare as it reopened.
++                    if (closeTabs) {
++                        BareClearOnExit.replaceAllTabs(
++                                selector,
++                                () ->
++                                        getTabCreator(/* incognito= */ false)
++                                                .launchNtp(TabLaunchType.FROM_CHROME_UI));
++                    }
+                     step.run();
+                 });
      }
- 
-@@ -6027,6 +6067,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+@@ -6123,6 +6169,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
          try (TraceEvent e = TraceEvent.scoped("ChromeTabbedActivity.onStop")) {
              super.onStop();
              clearIfLeaving();
@@ -149,22 +172,26 @@ index e2aede4..f61f2cf 100644
                  mSendTabToSelfGestureDetector.stop();
              }
 diff --git a/chrome/android/java/src/org/chromium/chrome/browser/bare/BareClearOnExit.java b/chrome/android/java/src/org/chromium/chrome/browser/bare/BareClearOnExit.java
-index aa93706..aa4c494 100644
+index 47a1024..f04f5c2 100644
 --- a/chrome/android/java/src/org/chromium/chrome/browser/bare/BareClearOnExit.java
 +++ b/chrome/android/java/src/org/chromium/chrome/browser/bare/BareClearOnExit.java
-@@ -4,6 +4,11 @@
+@@ -12,11 +12,15 @@ import org.chromium.chrome.browser.preferences.ChromePreferenceKeys;
+ import org.chromium.chrome.browser.preferences.ChromeSharedPreferences;
+ import org.chromium.chrome.browser.preferences.Pref;
+ import org.chromium.chrome.browser.profiles.Profile;
++import org.chromium.chrome.browser.tab.Tab;
+ import org.chromium.chrome.browser.tabmodel.TabClosureParams;
+ import org.chromium.chrome.browser.tabmodel.TabModel;
+ import org.chromium.chrome.browser.tabmodel.TabModelSelector;
+ import org.chromium.components.user_prefs.UserPrefs;
  
- package org.chromium.chrome.browser.bare;
- 
-+import android.app.ActivityManager;
-+import android.app.ApplicationExitInfo;
-+import android.content.Context;
-+import android.os.Build;
++import java.util.ArrayList;
++import java.util.List;
 +
- import org.chromium.build.annotations.NullMarked;
- import org.chromium.chrome.browser.browsing_data.BrowsingDataBridge;
- import org.chromium.chrome.browser.browsing_data.BrowsingDataType;
-@@ -67,6 +72,93 @@ public final class BareClearOnExit {
+ /**
+  * What the Exit item in the app menu deletes before the browser closes.
+  *
+@@ -70,6 +74,68 @@ public final class BareClearOnExit {
                  .writeBoolean(ChromePreferenceKeys.BARE_LEAVE_AS_EXIT, enabled);
      }
  
@@ -202,14 +229,17 @@ index aa93706..aa4c494 100644
 +    }
 +
 +    /**
-+     * On the first start of a process: whether the one before it was swiped away while armed. If
-+     * so, the swipe clear is marked pending for the start to carry out. The armed flag is cleared
-+     * either way.
++     * On the first start of a browser window: whether Bare was swiped away while armed. A window
++     * that comes back after Bare was only in the background is the same one, or is rebuilt from its
++     * saved state; a window built from nothing means the old one was removed from recent apps. That
++     * holds whether Android has already ended the old process or reuses it, as it does when Bare is
++     * reopened right after the swipe. If so, the swipe clear is marked pending for the start to
++     * carry out. The armed flag is cleared either way.
 +     */
-+    public static boolean consumeSwipedAway(Context context) {
++    public static boolean consumeSwipedAway(boolean freshWindow) {
 +        boolean armed = isSwipeArmed();
 +        disarmSwipe();
-+        if (!armed || !isClearOnSwipe() || !lastExitWasSwipe(context)) return false;
++        if (!armed || !isClearOnSwipe() || !freshWindow) return false;
 +        ChromeSharedPreferences.getInstance()
 +                .writeBoolean(ChromePreferenceKeys.BARE_CLEAR_SWIPE_PENDING, true);
 +        return true;
@@ -227,37 +257,45 @@ index aa93706..aa4c494 100644
 +        return pending;
 +    }
 +
-+    /**
-+     * Whether the browser process last ended because its task was removed from recents.
-+     *
-+     * <p>A process that Android ended to free memory is not a swipe and clears nothing. AOSP
-+     * records a removed task as requested by the user with the description "remove task"; some
-+     * manufacturers use descriptions of their own, which the word checks below try to catch.
-+     * Before Android 11 there is no record to read, so an armed process that died is treated as
-+     * swiped: clearing too often is the safer mistake here.
-+     */
-+    private static boolean lastExitWasSwipe(Context context) {
-+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return true;
-+        ActivityManager manager = context.getSystemService(ActivityManager.class);
-+        if (manager == null) return true;
-+        String browserProcess = context.getPackageName();
-+        for (ApplicationExitInfo info : manager.getHistoricalProcessExitReasons(null, 0, 16)) {
-+            if (!browserProcess.equals(info.getProcessName())) continue;
-+            // The newest entry for the browser process comes first.
-+            if (info.getReason() == ApplicationExitInfo.REASON_USER_REQUESTED) return true;
-+            String description = info.getDescription();
-+            if (description == null) return false;
-+            String lower = description.toLowerCase(java.util.Locale.ROOT);
-+            return lower.contains("remove task")
-+                    || lower.contains("removetask")
-+                    || lower.contains("swipe");
-+        }
-+        return true;
-+    }
-+
      /** Whether exiting also closes every tab, in both normal and private browsing. */
      public static boolean isCloseTabs() {
          return ChromeSharedPreferences.getInstance()
+@@ -99,6 +165,35 @@ public final class BareClearOnExit {
+         }
+     }
+ 
++    /**
++     * Swaps every tab, normal and private, for the one {@code openNewTab} opens. The new tab comes
++     * first so the window never holds zero tabs, which Chromium answers by closing it.
++     */
++    public static void replaceAllTabs(TabModelSelector selector, Runnable openNewTab) {
++        List<List<Tab>> before = new ArrayList<>();
++        for (TabModel model : selector.getModels()) {
++            List<Tab> tabs = new ArrayList<>();
++            for (int i = 0; i < model.getCount(); i++) {
++                Tab tab = model.getTabAt(i);
++                if (tab != null) tabs.add(tab);
++            }
++            before.add(tabs);
++        }
++        openNewTab.run();
++        int index = 0;
++        for (TabModel model : selector.getModels()) {
++            List<Tab> tabs = before.get(index++);
++            if (tabs.isEmpty()) continue;
++            model.getTabRemover()
++                    .closeTabs(
++                            TabClosureParams.closeTabs(tabs)
++                                    .allowUndo(false)
++                                    .hideTabGroups(false)
++                                    .build(),
++                            /* allowDialog= */ false);
++        }
++    }
++
+     /** Returns the bitmask of types the user has chosen for this profile. */
+     public static int getSelection(Profile profile) {
+         return UserPrefs.get(profile).getInteger(Pref.CLEAR_ON_EXIT_TYPES);
 diff --git a/chrome/android/java/src/org/chromium/chrome/browser/bare/BareSwipeWatchService.java b/chrome/android/java/src/org/chromium/chrome/browser/bare/BareSwipeWatchService.java
 new file mode 100644
 index 0000000..05b150b
@@ -386,22 +424,22 @@ index a01d7e9..5820908 100644
          assert closeTabs != null;
          closeTabs.setChecked(BareClearOnExit.isCloseTabs());
 diff --git a/chrome/browser/bare/backup/backup_settings.cc b/chrome/browser/bare/backup/backup_settings.cc
-index 13b60c8..2e50a4d 100644
+index e531c0e..cc209db 100644
 --- a/chrome/browser/bare/backup/backup_settings.cc
 +++ b/chrome/browser/bare/backup/backup_settings.cc
-@@ -387,6 +387,7 @@ constexpr Setting kSettings[] = {
+@@ -388,6 +388,7 @@ constexpr Setting kSettings[] = {
      {P, kSetup, "bare.clear_on_exit_types", kInt, IntRange<0, 63>},
      {A, kSetup, "Bare.ClearOnExit.CloseTabs", kBool, AnyBool},
      {A, kSetup, "Bare.ClearOnExit.LeaveAsExit", kBool, AnyBool},
 +    {A, kSetup, "Bare.ClearOnExit.OnSwipe", kBool, AnyBool},
      {P, kSetup, "enable_do_not_track", kBool, AnyBool},
      {P, kSetup, "https_only_mode_enabled", kBool, AnyBool},
-     {P, kSetup, "profile.cookie_controls_mode", kInt, IntRange<0, 2>},
+     {P, kSetup, "bare.canvas_block_enabled", kBool, AnyBool},
 diff --git a/chrome/browser/preferences/android/java/src/org/chromium/chrome/browser/preferences/ChromePreferenceKeys.java b/chrome/browser/preferences/android/java/src/org/chromium/chrome/browser/preferences/ChromePreferenceKeys.java
-index 1a2acf1..ca19e05 100644
+index ff570aa..bab5d63 100644
 --- a/chrome/browser/preferences/android/java/src/org/chromium/chrome/browser/preferences/ChromePreferenceKeys.java
 +++ b/chrome/browser/preferences/android/java/src/org/chromium/chrome/browser/preferences/ChromePreferenceKeys.java
-@@ -475,6 +475,12 @@ public final class ChromePreferenceKeys {
+@@ -488,6 +488,12 @@ public final class ChromePreferenceKeys {
      public static final String BARE_LEAVE_AS_EXIT = "Bare.ClearOnExit.LeaveAsExit";
      public static final String BARE_CLEAR_CLOSE_TABS = "Bare.ClearOnExit.CloseTabs";
      public static final String BARE_CLEAR_VEIL_PENDING = "Bare.ClearOnExit.VeilPending";
@@ -414,7 +452,7 @@ index 1a2acf1..ca19e05 100644
  
      /** Whether the vertical tabs drawer shows its tabs as a grid, two to a row. */
      public static final String BARE_VERTICAL_TABS_GRID = "Chrome.Bare.VerticalTabsGrid";
-@@ -1464,6 +1470,9 @@ public final class ChromePreferenceKeys {
+@@ -1536,6 +1542,9 @@ public final class ChromePreferenceKeys {
                  BARE_LEAVE_AS_EXIT,
                  BARE_CLEAR_CLOSE_TABS,
                  BARE_CLEAR_VEIL_PENDING,

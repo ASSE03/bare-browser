@@ -13,6 +13,8 @@ collision avec un numéro que Bare utilisera plus tard.
 | --- | --- |
 | `9000001.patch` | Action « Favoris » pour la barre d'outils : ouvre la liste de tous les favoris. À choisir dans Paramètres › Barre d'outils ; en mode minimal, la première position est le bouton à gauche de la barre d'adresse. |
 | `9000002.patch` | Option « Clear when swiped from recent apps » dans Confidentialité › Clear on exit : balayer Bare hors du multitâche efface ce qui est coché. Si Android tue Bare avant la fin, l'effacement se termine à l'ouverture suivante, avant l'affichage de toute page. |
+| `9000003.patch` | Supprime deux messages en bas d'écran : « Onglet … fermé / Annuler » (la fermeture est validée tout de suite) et la notice d'entrée en plein écran (« Pour quitter le plein écran, faites glisser… »). |
+| `9000004.patch` | Traduction française des textes de Bare : ses écrans (réglages, sauvegarde, accueil, barre d'outils…) et les textes de Chromium que Bare modifie, qui perdaient leur traduction. S'affiche quand le téléphone est en français. |
 
 ## Vérification automatique
 

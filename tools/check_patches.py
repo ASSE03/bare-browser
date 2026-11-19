@@ -2,7 +2,7 @@
 """Checks that the whole patch series still applies to the pinned Chromium.
 
 Needs no Chromium checkout. It reads the pinned commit from BUILDING.md,
-downloads from the chromium/chromium mirror on GitHub only the files the
+fetches from the chromium/chromium mirror on GitHub only the files the
 series modifies, then applies every patch in filename order with `git apply`.
 
 Files outside the main Chromium repository (V8, Skia and other DEPS
@@ -14,19 +14,16 @@ Exit code 0 when every patch applies, 1 otherwise.
 """
 
 import argparse
-import concurrent.futures
 import pathlib
 import re
 import shutil
 import subprocess
 import sys
 import tempfile
-import urllib.error
-import urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 PATCHES = ROOT / "patches"
-RAW = "https://raw.githubusercontent.com/chromium/chromium/{commit}/{path}"
+MIRROR = "https://github.com/chromium/chromium"
 
 
 def pinned_commit() -> str:
@@ -59,21 +56,44 @@ def files_needed(patches):
     return needed
 
 
-def download(commit, path, dest):
-    target = dest / path
-    target.parent.mkdir(parents=True, exist_ok=True)
-    url = RAW.format(commit=commit, path=path)
-    for attempt in range(3):
-        try:
-            with urllib.request.urlopen(url, timeout=60) as resp:
-                target.write_bytes(resp.read())
-            return path, True
-        except urllib.error.HTTPError as e:
-            if e.code == 404:
-                return path, False
-        except (urllib.error.URLError, TimeoutError):
-            pass
-    raise RuntimeError(f"Could not download {path}")
+def git(*args, cwd, **kw):
+    return subprocess.run(["git", *args], cwd=cwd, check=True, **kw)
+
+
+def fetch_files(commit, paths, dest):
+    """Writes the given Chromium files into dest; returns the paths not in the repo.
+
+    A blobless shallow fetch of the commit brings only its trees (about 20 MB);
+    the blobs needed are then fetched by id in a few batched requests. This
+    avoids raw.githubusercontent.com, which throttles hundreds of requests.
+    """
+    store = dest / ".chromium-objects"
+    store.mkdir(parents=True, exist_ok=True)
+    git("init", "-q", cwd=store)
+    git("fetch", "-q", "--no-tags", "--depth", "1", "--filter=blob:none",
+        MIRROR, commit, cwd=store)
+    listing = git("ls-tree", "-r", "-z", commit, cwd=store,
+                  capture_output=True).stdout.decode()
+    blobs = {}
+    for entry in listing.split("\0"):
+        if not entry:
+            continue
+        meta, path = entry.split("\t", 1)
+        blobs[path] = meta.split()[2]
+    found = [p for p in paths if p in blobs]
+    missing = [p for p in paths if p not in blobs]
+    ids = [blobs[p] for p in found]
+    for i in range(0, len(ids), 200):
+        git("-c", "fetch.negotiationAlgorithm=noop", "fetch", "-q", "--no-tags",
+            "--no-write-fetch-head", "--filter=blob:none", MIRROR, *ids[i:i + 200],
+            cwd=store)
+    for path in found:
+        target = dest / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(git("cat-file", "blob", blobs[path], cwd=store,
+                               capture_output=True).stdout)
+    shutil.rmtree(store, ignore_errors=True)
+    return missing
 
 
 def main():
@@ -88,11 +108,7 @@ def main():
 
     work = pathlib.Path(args.keep or tempfile.mkdtemp(prefix="bare-check-"))
     work.mkdir(parents=True, exist_ok=True)
-    missing = []
-    with concurrent.futures.ThreadPoolExecutor(max_workers=16) as pool:
-        for path, ok in pool.map(lambda p: download(commit, p, work), needed):
-            if not ok:
-                missing.append(path)
+    missing = fetch_files(commit, needed, work)
     if missing:
         print(f"{len(missing)} files are outside the chromium mirror and are skipped:")
         for path in missing:
