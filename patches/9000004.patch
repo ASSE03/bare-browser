@@ -328,10 +328,10 @@ index 0000000..273ec3d
 +</resources>
 diff --git a/chrome/android/java/res_chromium_base/values-fr/bare_strings_fr.xml b/chrome/android/java/res_chromium_base/values-fr/bare_strings_fr.xml
 new file mode 100644
-index 0000000..a466b9d
+index 0000000..4bf003b
 --- /dev/null
 +++ b/chrome/android/java/res_chromium_base/values-fr/bare_strings_fr.xml
-@@ -0,0 +1,251 @@
+@@ -0,0 +1,258 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- Copyright 2026 The Chromium Authors
 +     Use of this source code is governed by a BSD-style license that can be
@@ -357,6 +357,7 @@ index 0000000..a466b9d
 +    <string name="bare_look_and_feel_title">Apparence et ergonomie</string>
 +    <string name="bare_toolbar_menu_left_title">Menu à gauche</string>
 +    <string name="bare_toolbar_menu_left_summary">Inverse le menu et le premier bouton : menu à gauche, panneau latéral à droite</string>
++    <string name="bare_toolbar_menu_left_summary_minimal">Uniquement pour la barre complète. La barre minimale garde le menu à droite</string>
 +    <string name="bare_toolbar_always_visible_title">Garder la barre d’outils visible</string>
 +    <string name="bare_toolbar_always_visible_summary">La barre d’outils reste à l’écran pendant le défilement, dans les deux dispositions</string>
 +    <string name="bare_toolbar_preview_hint">Appuyez sur un bouton pour choisir son action</string>
@@ -564,6 +565,12 @@ index 0000000..a466b9d
 +    <string name="bare_whats_new_205_bareurl">Tapez bare:// pour ouvrir les pages propres à Bare, comme bare://flags.</string>
 +    <string name="bare_whats_new_205_smoothoff">Le défilement fluide est désormais désactivé par défaut : le défilement ressemble à celui de Chrome sur téléphone.</string>
 +    <string name="bare_whats_new_205_barhide">Sur un nouvel onglet, la barre se masque dès que vous faites défiler.</string>
++    <string name="bare_whats_new_207_crx">L’ajout d’extensions depuis le Chrome Web Store, ou depuis un lien .crx, fonctionne à nouveau.</string>
++    <string name="bare_whats_new_207_center">L’adresse est de nouveau centrée dans la barre d’adresse quand vous ne tapez pas.</string>
++    <string name="bare_whats_new_207_downloads">Les téléchargements ne plantent plus sur certains téléphones Android 16.</string>
++    <string name="bare_whats_new_207_ellipsis">Un nom de site trop long pour la barre d’adresse garde maintenant son début et se termine par des points de suspension, au lieu de perdre ses premières lettres.</string>
++    <string name="bare_whats_new_206_toolbar">La barre d’outils se replie au défilement même avec TalkBack ou un autre service d’accessibilité activé. Pour la garder à l’écran, activez Garder la barre d’outils visible.</string>
++    <string name="bare_whats_new_206_crash">Correction d’un plantage qui pouvait survenir avec la barre d’adresse en bas.</string>
 +    <string name="bare_welcome_restart">Revenir au début</string>
 +    <string name="bare_welcome_finish_caption">Tout peut être modifié plus tard dans les paramètres.</string>
 +    <string name="bare_welcome_value_top">En haut</string>
