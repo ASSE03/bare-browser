@@ -1,0 +1,94 @@
+diff --git a/chrome/android/java/src/org/chromium/chrome/browser/tab/TabImpl.java b/chrome/android/java/src/org/chromium/chrome/browser/tab/TabImpl.java
+index 90ea019..ac99c26 100644
+--- a/chrome/android/java/src/org/chromium/chrome/browser/tab/TabImpl.java
++++ b/chrome/android/java/src/org/chromium/chrome/browser/tab/TabImpl.java
+@@ -56,6 +56,8 @@ import org.chromium.base.process_launcher.ScopedServiceBindingBatch;
+ import org.chromium.base.supplier.NonNullObservableSupplier;
+ import org.chromium.base.supplier.ObservableSuppliers;
+ import org.chromium.base.supplier.SettableNonNullObservableSupplier;
++import org.chromium.base.task.PostTask;
++import org.chromium.base.task.TaskTraits;
+ import org.chromium.base.version_info.VersionInfo;
+ import org.chromium.build.annotations.EnsuresNonNullIf;
+ import org.chromium.build.annotations.Initializer;
+@@ -2142,6 +2144,7 @@ class TabImpl implements Tab, TabInternal {
+      * @param errorCode The error code causing the page to fail loading.
+      */
+     void didFailPageLoad(int errorCode) {
++        releaseHeldBookmarksPage();
+         for (TabObserver observer : mObservers) {
+             observer.onPageLoadFailed(this, errorCode);
+         }
+@@ -2206,7 +2209,7 @@ class TabImpl implements Tab, TabInternal {
+                     param.setInitiatorOrigin(initiatorOrigin);
+                 }
+                 loadUrl(param);
+-            } else if (!maybeLaunchActivity(url)) {
++            } else if (!maybeLaunchActivity(url) && !maybeHoldBookmarksPage(url)) {
+                 showRenderedPage();
+             }
+         }
+@@ -2214,6 +2217,45 @@ class TabImpl implements Tab, TabInternal {
+         setLastNavigationCommittedTimestampMillis(System.currentTimeMillis());
+     }
+ 
++    /** Bare: longest time the bookmarks page stays up over a site that has not painted yet. */
++    private static final long BARE_BOOKMARKS_HOLD_MAX_MS = 2000;
++
++    /** Bare: set while the bookmarks page stays up over a committed site that has not painted. */
++    private boolean mBareHoldingBookmarksPage;
++
++    /** Bare: tells a pending timeout apart from a later hold. */
++    private int mBareHoldGeneration;
++
++    /**
++     * Bare: a site opened from the bookmarks page shows, until it paints, whatever the tab held
++     * under the bookmarks page: the site before it, or another bookmarks screen. The bookmarks page
++     * stays up instead until the site's first paint, a failure, or two seconds.
++     */
++    private boolean maybeHoldBookmarksPage(GURL url) {
++        NativePage page = mNativePage;
++        if (page == null || page.isFrozen() || mIsHidden) return false;
++        if (!"bookmarks".equals(Uri.parse(page.getUrl()).getHost())) return false;
++        String scheme = url.getScheme();
++        if (!"https".equals(scheme) && !"http".equals(scheme)) return false;
++        mBareHoldingBookmarksPage = true;
++        int generation = ++mBareHoldGeneration;
++        PostTask.postDelayedTask(
++                TaskTraits.UI_DEFAULT,
++                () -> {
++                    if (generation == mBareHoldGeneration) releaseHeldBookmarksPage();
++                },
++                BARE_BOOKMARKS_HOLD_MAX_MS);
++        return true;
++    }
++
++    /** Bare: lets the site show once it has painted, failed, or the wait has run out. */
++    private void releaseHeldBookmarksPage() {
++        if (!mBareHoldingBookmarksPage) return;
++        mBareHoldingBookmarksPage = false;
++        mBareHoldGeneration++;
++        if (!isDestroyed()) showRenderedPage();
++    }
++
+     private boolean maybeLaunchActivity(GURL url) {
+         if (!ChromeFeatureList.isEnabled(ChromeFeatureList.ANDROID_SETTINGS_URL)) return false;
+ 
+@@ -2339,6 +2381,9 @@ class TabImpl implements Tab, TabInternal {
+         mPendingNativePageHost = null;
+ 
+         if (nativePage != null) {
++            // Bare: a native page replacing a held bookmarks page ends the hold.
++            mBareHoldingBookmarksPage = false;
++            mBareHoldGeneration++;
+             showNativePage(nativePage);
+             notifyPageTitleChanged();
+             notifyFaviconChanged();
+@@ -2454,6 +2499,7 @@ class TabImpl implements Tab, TabInternal {
+ 
+     /** Called to notify when the page had painted something non-empty. */
+     void notifyDidFirstVisuallyNonEmptyPaint() {
++        releaseHeldBookmarksPage();
+         if (mWaitingOnBgColorAfterHidingNativePage) {
+             onBackgroundColorChanged();
+         }
