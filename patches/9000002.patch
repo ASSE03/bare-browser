@@ -69,7 +69,7 @@ index 998b5ff..0613951 100644
      <string name="bare_clear_close_tabs_summary" translatable="false">Normal and private tabs. Nothing is kept to reopen.</string>
      <string name="bare_translate_own_category" translatable="false">My own server</string>
 diff --git a/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java b/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
-index 75fc14b..2b82b70 100644
+index 75fc14b..1c8db11 100644
 --- a/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
 +++ b/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
 @@ -115,6 +115,7 @@ import org.chromium.chrome.browser.auxiliary_search.module.AuxiliarySearchModule
@@ -124,7 +124,7 @@ index 75fc14b..2b82b70 100644
      /** Set when Bare starts another screen itself, so that going there is not leaving the app. */
      private boolean mStartedOtherScreen;
  
-@@ -6076,10 +6107,29 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+@@ -6076,10 +6107,35 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
          if (profile == null) return;
          Profile original = profile.getOriginalProfile();
          if (!BareClearOnExit.hasWork(original)) return;
@@ -144,20 +144,26 @@ index 75fc14b..2b82b70 100644
 +
 +    /**
 +     * Bare: after Clear on exit has closed every tab, opens the homepage when one is set, as a cold
-+     * start with no tabs does, and a new tab otherwise.
++     * start with no tabs does, and a new tab otherwise. A homepage set to the bookmarks page opens
++     * on the Bookmarks bar folder, like the toolbar's Bookmarks button.
 +     */
 +    private void openStartPageAfterClear() {
-+        GURL home = HomepageManager.getInstance().getHomepageGurlForZeroTabs(/* isIncognito= */ false);
++        GURL home =
++                HomepageManager.getInstance().getHomepageGurlForZeroTabs(/* isIncognito= */ false);
 +        if (home.isEmpty() || UrlUtilities.isNtpUrl(home)) {
 +            getTabCreator(/* incognito= */ false).launchNtp(TabLaunchType.FROM_CHROME_UI);
-+        } else {
-+            getTabCreator(/* incognito= */ false)
-+                    .launchUrl(home.getSpec(), TabLaunchType.FROM_CHROME_UI);
++            return;
++        }
++        getTabCreator(/* incognito= */ false)
++                .launchUrl(home.getSpec(), TabLaunchType.FROM_CHROME_UI);
++        String spec = home.getSpec();
++        if (spec.startsWith("chrome://bookmarks") || spec.startsWith("chrome-native://bookmarks")) {
++            openBookmarksBarFolder();
 +        }
      }
  
      /** Set once this activity has taken over what an earlier run left pending. */
-@@ -6105,6 +6155,9 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+@@ -6105,6 +6161,9 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
          }
          mInterruptedClearTaken = true;
          Profile original = profileProvider.getOriginalProfile();
@@ -167,7 +173,7 @@ index 75fc14b..2b82b70 100644
          if (!BareClearVeil.isPending()) {
              BareClearOnExit.resumeIfInterrupted(original, () -> {});
              return;
-@@ -6113,13 +6166,23 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+@@ -6113,13 +6172,23 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
          int[] stepsLeft = {2};
          Runnable step =
                  () -> {
@@ -194,7 +200,7 @@ index 75fc14b..2b82b70 100644
                      step.run();
                  });
      }
-@@ -6139,6 +6202,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+@@ -6139,6 +6208,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
          try (TraceEvent e = TraceEvent.scoped("ChromeTabbedActivity.onStop")) {
              super.onStop();
              clearIfLeaving();
