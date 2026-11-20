@@ -1,8 +1,8 @@
 diff --git a/chrome/android/chrome_java_resources.gni b/chrome/android/chrome_java_resources.gni
-index ebd74d2..d3ae76f 100644
+index 42217b6..e318986 100644
 --- a/chrome/android/chrome_java_resources.gni
 +++ b/chrome/android/chrome_java_resources.gni
-@@ -471,6 +471,7 @@ chrome_java_resources = [
+@@ -489,6 +489,7 @@ chrome_java_resources = [
    "java/res/animator/bare_settings_close_exit.xml",
    "java/res/drawable/bare_leaf.xml",
    "java/res/drawable/ic_bare_task_manager.xml",
@@ -32,6 +32,40 @@ index 0000000..0949f03
 +        android:fillColor="@android:color/white"
 +        android:pathData="M19,18l2,1V3c0,-1.1 -0.9,-2 -2,-2H8.99C7.89,1 7,1.9 7,3h10c1.1,0 2,0.9 2,2v13zM15,5H5c-1.1,0 -1.99,0.9 -1.99,2L3,23l7,-3 7,3V7c0,-1.1 -0.9,-2 -2,-2z"/>
 +</vector>
+diff --git a/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java b/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
+index fae2c24..75fc14b 100644
+--- a/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
++++ b/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
+@@ -118,6 +118,7 @@ import org.chromium.chrome.browser.bare.BareClearVeil;
+ import org.chromium.chrome.browser.bare.BareNewTabRise;
+ import org.chromium.chrome.browser.back_press.MinimizeAppAndCloseTabBackPressHandler;
+ import org.chromium.chrome.browser.back_press.MinimizeAppAndCloseTabBackPressHandler.MinimizeAppAndCloseTabType;
++import org.chromium.chrome.browser.bookmarks.BookmarkManagerOpener;
+ import org.chromium.chrome.browser.bookmarks.BookmarkManagerOpenerImpl;
+ import org.chromium.chrome.browser.bare.BareUpdateCheck;
+ import org.chromium.chrome.browser.bare.BareWelcomeOverlay;
+@@ -4629,6 +4630,21 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+                                         }));
+     }
+ 
++    /**
++     * Bare: opens the bookmark manager straight on the Bookmarks bar folder, for the toolbar's
++     * Bookmarks button. The menu's Bookmarks item still opens the last folder used.
++     */
++    public void openBookmarksBarFolder() {
++        if (!areTabModelsInitialized()) return;
++        Profile profile = getCurrentTabModel().getProfile();
++        BookmarkManagerOpener opener = mBookmarkManagerOpenerSupplier.get();
++        if (profile == null || opener == null) return;
++        Tab tab = getActivityTab();
++        BookmarkModel model = BookmarkModel.getForProfile(profile.getOriginalProfile());
++        model.finishLoadingBookmarkModel(
++                () -> opener.showBookmarkManager(this, tab, profile, model.getDesktopFolderId()));
++    }
++
+     @Override
+     public boolean onMenuOrKeyboardAction(
+             final int id,
 diff --git a/chrome/android/java/src/org/chromium/chrome/browser/bare/BareToolbarActionCatalogue.java b/chrome/android/java/src/org/chromium/chrome/browser/bare/BareToolbarActionCatalogue.java
 index 4c5d1a7..5b65942 100644
 --- a/chrome/android/java/src/org/chromium/chrome/browser/bare/BareToolbarActionCatalogue.java
@@ -84,23 +118,26 @@ index 426cf63..dbf49ef 100644
                  return R.drawable.btn_tabswitcher_modern;
          }
 diff --git a/chrome/android/java/src/org/chromium/chrome/browser/tabbed_mode/TabbedRootUiCoordinator.java b/chrome/android/java/src/org/chromium/chrome/browser/tabbed_mode/TabbedRootUiCoordinator.java
-index 81e5f4a..e45e060 100644
+index 81e5f4a..15c567a 100644
 --- a/chrome/android/java/src/org/chromium/chrome/browser/tabbed_mode/TabbedRootUiCoordinator.java
 +++ b/chrome/android/java/src/org/chromium/chrome/browser/tabbed_mode/TabbedRootUiCoordinator.java
-@@ -1234,7 +1234,15 @@ public class TabbedRootUiCoordinator extends RootUiCoordinator {
+@@ -63,6 +63,7 @@ import org.chromium.chrome.browser.ActivityTabProvider.ActivityTabTabObserver;
+ import org.chromium.chrome.browser.ChromeActivitySessionTracker;
+ import org.chromium.chrome.browser.ChromeInactivityTracker;
+ import org.chromium.chrome.browser.ChromeInactivityTracker.InactivityObserver;
++import org.chromium.chrome.browser.ChromeTabbedActivity;
+ import org.chromium.chrome.browser.IntentHandler;
+ import org.chromium.chrome.browser.SwipeRefreshHandler;
+ import org.chromium.chrome.browser.accessibility.PageZoomIphController;
+@@ -1234,7 +1235,10 @@ public class TabbedRootUiCoordinator extends RootUiCoordinator {
                                      // coordinator's own handler does not reach.
                                      ((ChromeActivity) mActivity)
                                              .onMenuOrKeyboardAction(
 -                                                    R.id.task_manager, false, null, null));
 +                                                    R.id.task_manager, false, null, null),
 +                            () ->
-+                                    // The bookmark manager is opened by the tabbed activity too.
-+                                    ((ChromeActivity) mActivity)
-+                                            .onMenuOrKeyboardAction(
-+                                                    R.id.all_bookmarks_menu_id,
-+                                                    false,
-+                                                    null,
-+                                                    null));
++                                    // Straight to the Bookmarks bar folder.
++                                    ((ChromeTabbedActivity) mActivity).openBookmarksBarFolder());
          }
      }
  
