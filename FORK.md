@@ -16,6 +16,7 @@ collision avec un numéro que Bare utilisera plus tard.
 | `9000003.patch` | Supprime deux messages en bas d'écran : « Onglet … fermé / Annuler » (la fermeture est validée tout de suite) et la notice d'entrée en plein écran (« Pour quitter le plein écran, faites glisser… »). |
 | `9000004.patch` | Traduction française des textes de Bare : ses écrans (réglages, sauvegarde, accueil, barre d'outils…) et les textes de Chromium que Bare modifie, qui perdaient leur traduction. S'affiche quand le téléphone est en français. |
 | `9000005.patch` | Ouvrir un favori depuis l'écran des favoris n'affiche plus brièvement le contenu précédent de l'onglet (site d'avant ou racine des favoris) : l'onglet affiche le dossier de favoris jusqu'au premier affichage du site (quelques secondes au maximum). |
+| `9000006.patch` | Les favoris s'ouvrent dans l'onglet courant, sous la barre d'adresse, au lieu d'un écran séparé. Retour revient à la page d'avant. |
 
 ## Vérification automatique
 
