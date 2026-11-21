@@ -1,0 +1,20 @@
+diff --git a/chrome/android/java/src/org/chromium/chrome/browser/bookmarks/BookmarkManagerOpenerImpl.java b/chrome/android/java/src/org/chromium/chrome/browser/bookmarks/BookmarkManagerOpenerImpl.java
+index 010ab71..128d4fd 100644
+--- a/chrome/android/java/src/org/chromium/chrome/browser/bookmarks/BookmarkManagerOpenerImpl.java
++++ b/chrome/android/java/src/org/chromium/chrome/browser/bookmarks/BookmarkManagerOpenerImpl.java
+@@ -51,7 +51,14 @@ public class BookmarkManagerOpenerImpl implements BookmarkManagerOpener {
+             RecordUserAction.record("MobileBookmarkManagerReopenBookmarksInSameSession");
+         }
+ 
+-        if (DeviceFormFactor.isNonMultiDisplayContextOnTablet(activity)) {
++        if (tab != null
++                && !tab.isDestroyed()
++                && !tab.isCustomTab()
++                && tab.isIncognitoBranded() == profile.isIncognitoBranded()) {
++            // Bare: the bookmarks open in the current tab, under the address bar, instead of a
++            // separate screen. Back returns to the page shown before.
++            tab.loadUrl(new LoadUrlParams(url));
++        } else if (DeviceFormFactor.isNonMultiDisplayContextOnTablet(activity)) {
+             showBookmarkManagerOnTablet(tab, url, profile);
+         } else {
+             showBookmarkManagerOnPhone(activity, url, profile);
