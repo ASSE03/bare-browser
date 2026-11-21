@@ -1,5 +1,45 @@
+diff --git a/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java b/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
+index 1c8db11..952a080 100644
+--- a/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
++++ b/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
+@@ -3200,6 +3200,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+                 if (currentTab != null) {
+                     RedirectHandlerTabHelper.updateIntentInTab(
+                             currentTab, intent, /* isCustomTab= */ false);
++                    maybeShowBookmarksUntilPaint(currentTab, intent, url);
+                     currentTab.loadUrl(loadUrlParams);
+                     resultTab = currentTab;
+                 } else {
+@@ -6123,6 +6124,27 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+      * start with no tabs does, and a new tab otherwise. A homepage set to the bookmarks page opens
+      * on the Bookmarks bar folder, like the toolbar's Bookmarks button.
+      */
++    /**
++     * Bare: a bookmark opened from the bookmarks screen loads in the current tab, which would show
++     * its previous site until the bookmark paints. The tab shows the bookmarks folder instead.
++     */
++    private static void maybeShowBookmarksUntilPaint(Tab tab, Intent intent, String url) {
++        if (IntentUtils.safeGetStringExtra(intent, IntentHandler.EXTRA_PAGE_TRANSITION_BOOKMARK_ID)
++                == null) {
++            return;
++        }
++        if (url == null || !(url.startsWith("https://") || url.startsWith("http://"))) return;
++        String bookmarksUrl =
++                ChromeSharedPreferences.getInstance()
++                        .readString(
++                                ChromePreferenceKeys.BOOKMARKS_LAST_USED_URL,
++                                "chrome-native://bookmarks/");
++        if (bookmarksUrl == null || !bookmarksUrl.startsWith("chrome-native://bookmarks")) {
++            bookmarksUrl = "chrome-native://bookmarks/";
++        }
++        tab.bareShowBookmarksUntilPaint(bookmarksUrl);
++    }
++
+     private void openStartPageAfterClear() {
+         GURL home =
+                 HomepageManager.getInstance().getHomepageGurlForZeroTabs(/* isIncognito= */ false);
 diff --git a/chrome/android/java/src/org/chromium/chrome/browser/tab/TabImpl.java b/chrome/android/java/src/org/chromium/chrome/browser/tab/TabImpl.java
-index 90ea019..ac99c26 100644
+index 90ea019..b633ca8 100644
 --- a/chrome/android/java/src/org/chromium/chrome/browser/tab/TabImpl.java
 +++ b/chrome/android/java/src/org/chromium/chrome/browser/tab/TabImpl.java
 @@ -56,6 +56,8 @@ import org.chromium.base.process_launcher.ScopedServiceBindingBatch;
@@ -28,7 +68,7 @@ index 90ea019..ac99c26 100644
                  showRenderedPage();
              }
          }
-@@ -2214,6 +2217,45 @@ class TabImpl implements Tab, TabInternal {
+@@ -2214,6 +2217,79 @@ class TabImpl implements Tab, TabInternal {
          setLastNavigationCommittedTimestampMillis(System.currentTimeMillis());
      }
  
@@ -48,7 +88,9 @@ index 90ea019..ac99c26 100644
 +     */
 +    private boolean maybeHoldBookmarksPage(GURL url) {
 +        NativePage page = mNativePage;
-+        if (page == null || page.isFrozen() || mIsHidden) return false;
++        boolean placeholder = mBareBookmarksPlaceholder;
++        mBareBookmarksPlaceholder = false;
++        if (page == null || page.isFrozen() || (mIsHidden && !placeholder)) return false;
 +        if (!"bookmarks".equals(Uri.parse(page.getUrl()).getHost())) return false;
 +        String scheme = url.getScheme();
 +        if (!"https".equals(scheme) && !"http".equals(scheme)) return false;
@@ -63,10 +105,42 @@ index 90ea019..ac99c26 100644
 +        return true;
 +    }
 +
++    /** Bare: set while a bookmarks page stands in for the site the tab showed before. */
++    private boolean mBareBookmarksPlaceholder;
++
++    /** Bare: tells a pending placeholder timeout apart from a later placeholder. */
++    private int mBarePlaceholderGeneration;
++
++    /**
++     * Bare: on phones the bookmarks list is its own screen above the browser. When a bookmark is
++     * opened from it, the browser comes back showing the tab's previous site until the bookmark
++     * commits and paints. The bookmarks page is shown in the tab in the meantime; {@link
++     * #maybeHoldBookmarksPage} keeps it up until the site's first paint.
++     */
++    @Override
++    public void bareShowBookmarksUntilPaint(String bookmarksUrl) {
++        if (isDestroyed() || mNativeTabAndroid == 0) return;
++        if (!maybeShowNativePage(bookmarksUrl, /* forceReload= */ false, /* pdfInfo= */ null)) {
++            return;
++        }
++        mBareBookmarksPlaceholder = true;
++        int generation = ++mBarePlaceholderGeneration;
++        PostTask.postDelayedTask(
++                TaskTraits.UI_DEFAULT,
++                () -> {
++                    // The site never committed (blocked, handed to another app...): show the tab.
++                    if (generation == mBarePlaceholderGeneration && mBareBookmarksPlaceholder) {
++                        releaseHeldBookmarksPage();
++                    }
++                },
++                BARE_BOOKMARKS_HOLD_MAX_MS * 3);
++    }
++
 +    /** Bare: lets the site show once it has painted, failed, or the wait has run out. */
 +    private void releaseHeldBookmarksPage() {
-+        if (!mBareHoldingBookmarksPage) return;
++        if (!mBareHoldingBookmarksPage && !mBareBookmarksPlaceholder) return;
 +        mBareHoldingBookmarksPage = false;
++        mBareBookmarksPlaceholder = false;
 +        mBareHoldGeneration++;
 +        if (!isDestroyed()) showRenderedPage();
 +    }
@@ -74,17 +148,18 @@ index 90ea019..ac99c26 100644
      private boolean maybeLaunchActivity(GURL url) {
          if (!ChromeFeatureList.isEnabled(ChromeFeatureList.ANDROID_SETTINGS_URL)) return false;
  
-@@ -2339,6 +2381,9 @@ class TabImpl implements Tab, TabInternal {
+@@ -2339,6 +2415,10 @@ class TabImpl implements Tab, TabInternal {
          mPendingNativePageHost = null;
  
          if (nativePage != null) {
 +            // Bare: a native page replacing a held bookmarks page ends the hold.
 +            mBareHoldingBookmarksPage = false;
++            mBareBookmarksPlaceholder = false;
 +            mBareHoldGeneration++;
              showNativePage(nativePage);
              notifyPageTitleChanged();
              notifyFaviconChanged();
-@@ -2454,6 +2499,7 @@ class TabImpl implements Tab, TabInternal {
+@@ -2454,6 +2534,7 @@ class TabImpl implements Tab, TabInternal {
  
      /** Called to notify when the page had painted something non-empty. */
      void notifyDidFirstVisuallyNonEmptyPaint() {
@@ -92,3 +167,20 @@ index 90ea019..ac99c26 100644
          if (mWaitingOnBgColorAfterHidingNativePage) {
              onBackgroundColorChanged();
          }
+diff --git a/chrome/browser/tab/java/src/org/chromium/chrome/browser/tab/Tab.java b/chrome/browser/tab/java/src/org/chromium/chrome/browser/tab/Tab.java
+index abc3656..0d9dfce 100644
+--- a/chrome/browser/tab/java/src/org/chromium/chrome/browser/tab/Tab.java
++++ b/chrome/browser/tab/java/src/org/chromium/chrome/browser/tab/Tab.java
+@@ -190,6 +190,12 @@ public interface Tab extends TabLifecycle {
+     /** Returns whether or not the {@link Tab} represents a {@link NativePage}. */
+     boolean isNativePage();
+ 
++    /**
++     * Bare: shows the given bookmarks page in this tab until the site about to load in it first
++     * paints, so the site the tab showed before never flashes up in between.
++     */
++    default void bareShowBookmarksUntilPaint(String bookmarksUrl) {}
++
+     /**
+      * Returns whether a custom view shown through {@link TabViewManager} is being displayed instead
+      * of the current WebContents.
