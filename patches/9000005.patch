@@ -39,7 +39,7 @@ index 1c8db11..952a080 100644
          GURL home =
                  HomepageManager.getInstance().getHomepageGurlForZeroTabs(/* isIncognito= */ false);
 diff --git a/chrome/android/java/src/org/chromium/chrome/browser/tab/TabImpl.java b/chrome/android/java/src/org/chromium/chrome/browser/tab/TabImpl.java
-index 90ea019..b633ca8 100644
+index 90ea019..8e5280a 100644
 --- a/chrome/android/java/src/org/chromium/chrome/browser/tab/TabImpl.java
 +++ b/chrome/android/java/src/org/chromium/chrome/browser/tab/TabImpl.java
 @@ -56,6 +56,8 @@ import org.chromium.base.process_launcher.ScopedServiceBindingBatch;
@@ -68,7 +68,7 @@ index 90ea019..b633ca8 100644
                  showRenderedPage();
              }
          }
-@@ -2214,6 +2217,79 @@ class TabImpl implements Tab, TabInternal {
+@@ -2214,6 +2217,88 @@ class TabImpl implements Tab, TabInternal {
          setLastNavigationCommittedTimestampMillis(System.currentTimeMillis());
      }
  
@@ -120,7 +120,16 @@ index 90ea019..b633ca8 100644
 +    @Override
 +    public void bareShowBookmarksUntilPaint(String bookmarksUrl) {
 +        if (isDestroyed() || mNativeTabAndroid == 0) return;
-+        if (!maybeShowNativePage(bookmarksUrl, /* forceReload= */ false, /* pdfInfo= */ null)) {
++        NativePage current = mNativePage;
++        boolean alreadyShowing =
++                current != null
++                        && !current.isFrozen()
++                        && "bookmarks".equals(Uri.parse(current.getUrl()).getHost());
++        // A bookmarks page already in the tab stays as it is, scroll position included: reloading
++        // it would jump back to the top of the folder.
++        if (!alreadyShowing
++                && !maybeShowNativePage(
++                        bookmarksUrl, /* forceReload= */ false, /* pdfInfo= */ null)) {
 +            return;
 +        }
 +        mBareBookmarksPlaceholder = true;
@@ -148,7 +157,7 @@ index 90ea019..b633ca8 100644
      private boolean maybeLaunchActivity(GURL url) {
          if (!ChromeFeatureList.isEnabled(ChromeFeatureList.ANDROID_SETTINGS_URL)) return false;
  
-@@ -2339,6 +2415,10 @@ class TabImpl implements Tab, TabInternal {
+@@ -2339,6 +2424,10 @@ class TabImpl implements Tab, TabInternal {
          mPendingNativePageHost = null;
  
          if (nativePage != null) {
@@ -159,7 +168,7 @@ index 90ea019..b633ca8 100644
              showNativePage(nativePage);
              notifyPageTitleChanged();
              notifyFaviconChanged();
-@@ -2454,6 +2534,7 @@ class TabImpl implements Tab, TabInternal {
+@@ -2454,6 +2543,7 @@ class TabImpl implements Tab, TabInternal {
  
      /** Called to notify when the page had painted something non-empty. */
      void notifyDidFirstVisuallyNonEmptyPaint() {
