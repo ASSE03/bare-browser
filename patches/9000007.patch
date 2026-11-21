@@ -1,0 +1,59 @@
+diff --git a/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java b/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
+index 952a080..ca58e40 100644
+--- a/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
++++ b/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
+@@ -126,6 +126,7 @@ import org.chromium.chrome.browser.bare.BareWelcomeOverlay;
+ import org.chromium.chrome.browser.bare.notices.BareNotices;
+ import org.chromium.chrome.browser.bare.player.BarePlayerController;
+ import org.chromium.chrome.browser.bookmarks.BookmarkModel;
++import org.chromium.chrome.browser.bookmarks.BookmarkUiState;
+ import org.chromium.chrome.browser.bookmarks.BookmarkOpenerImpl;
+ import org.chromium.chrome.browser.bookmarks.BookmarkPane;
+ import org.chromium.chrome.browser.bookmarks.BookmarkUtils;
+@@ -3007,7 +3008,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+         } else {
+             url = homepageGurl.getSpec();
+         }
+-        getTabCreator(incognito).launchUrl(url, TabLaunchType.FROM_STARTUP);
++        launchHomepageTab(incognito, url, TabLaunchType.FROM_STARTUP);
+         PartnerBrowserCustomizations.getInstance()
+                 .onCreateInitialTab(
+                         url,
+@@ -6152,12 +6153,31 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+             getTabCreator(/* incognito= */ false).launchNtp(TabLaunchType.FROM_CHROME_UI);
+             return;
+         }
+-        getTabCreator(/* incognito= */ false)
+-                .launchUrl(home.getSpec(), TabLaunchType.FROM_CHROME_UI);
+-        String spec = home.getSpec();
+-        if (spec.startsWith("chrome://bookmarks") || spec.startsWith("chrome-native://bookmarks")) {
+-            openBookmarksBarFolder();
+-        }
++        launchHomepageTab(/* incognito= */ false, home.getSpec(), TabLaunchType.FROM_CHROME_UI);
++    }
++
++    /**
++     * Bare: opens the homepage in a new tab. A bookmarks homepage opens on the Bookmarks bar
++     * folder, in that same tab, rather than on the list of top-level folders.
++     */
++    private void launchHomepageTab(boolean incognito, String url, @TabLaunchType int type) {
++        Tab tab = getTabCreator(incognito).launchUrl(url, type);
++        if (tab == null) return;
++        boolean bookmarksRoot =
++                (url.startsWith("chrome://bookmarks") || url.startsWith("chrome-native://bookmarks"))
++                        && !url.contains("/folder/");
++        if (!bookmarksRoot) return;
++        BookmarkModel model = BookmarkModel.getForProfile(tab.getProfile().getOriginalProfile());
++        if (model == null) return;
++        model.finishLoadingBookmarkModel(
++                () -> {
++                    BookmarkId folder = model.getDesktopFolderId();
++                    if (tab.isDestroyed() || folder == null) return;
++                    LoadUrlParams params =
++                            new LoadUrlParams(BookmarkUiState.createFolderUrl(folder).toString());
++                    params.setShouldReplaceCurrentEntry(true);
++                    tab.loadUrl(params);
++                });
+     }
+ 
+     /** Set once this activity has taken over what an earlier run left pending. */
