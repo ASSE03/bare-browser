@@ -1,5 +1,5 @@
 diff --git a/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java b/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
-index 952a080..da82a7e 100644
+index 1536186..c3f150d 100644
 --- a/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
 +++ b/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
 @@ -126,6 +126,7 @@ import org.chromium.chrome.browser.bare.BareWelcomeOverlay;
@@ -10,7 +10,7 @@ index 952a080..da82a7e 100644
  import org.chromium.chrome.browser.bookmarks.BookmarkOpenerImpl;
  import org.chromium.chrome.browser.bookmarks.BookmarkPane;
  import org.chromium.chrome.browser.bookmarks.BookmarkUtils;
-@@ -3007,7 +3008,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+@@ -3066,7 +3067,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
          } else {
              url = homepageGurl.getSpec();
          }
@@ -19,7 +19,7 @@ index 952a080..da82a7e 100644
          PartnerBrowserCustomizations.getInstance()
                  .onCreateInitialTab(
                          url,
-@@ -6152,12 +6153,51 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+@@ -6224,12 +6225,51 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
              getTabCreator(/* incognito= */ false).launchNtp(TabLaunchType.FROM_CHROME_UI);
              return;
          }

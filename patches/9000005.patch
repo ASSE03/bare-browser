@@ -1,8 +1,8 @@
 diff --git a/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java b/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
-index 1c8db11..952a080 100644
+index 9bbcd20..1536186 100644
 --- a/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
 +++ b/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
-@@ -3200,6 +3200,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+@@ -3259,6 +3259,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
                  if (currentTab != null) {
                      RedirectHandlerTabHelper.updateIntentInTab(
                              currentTab, intent, /* isCustomTab= */ false);
@@ -10,7 +10,7 @@ index 1c8db11..952a080 100644
                      currentTab.loadUrl(loadUrlParams);
                      resultTab = currentTab;
                  } else {
-@@ -6123,6 +6124,27 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+@@ -6195,6 +6196,27 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
       * start with no tabs does, and a new tab otherwise. A homepage set to the bookmarks page opens
       * on the Bookmarks bar folder, like the toolbar's Bookmarks button.
       */
@@ -39,7 +39,7 @@ index 1c8db11..952a080 100644
          GURL home =
                  HomepageManager.getInstance().getHomepageGurlForZeroTabs(/* isIncognito= */ false);
 diff --git a/chrome/android/java/src/org/chromium/chrome/browser/tab/TabImpl.java b/chrome/android/java/src/org/chromium/chrome/browser/tab/TabImpl.java
-index 90ea019..8e5280a 100644
+index 8f9a561..df39635 100644
 --- a/chrome/android/java/src/org/chromium/chrome/browser/tab/TabImpl.java
 +++ b/chrome/android/java/src/org/chromium/chrome/browser/tab/TabImpl.java
 @@ -56,6 +56,8 @@ import org.chromium.base.process_launcher.ScopedServiceBindingBatch;
@@ -51,7 +51,7 @@ index 90ea019..8e5280a 100644
  import org.chromium.base.version_info.VersionInfo;
  import org.chromium.build.annotations.EnsuresNonNullIf;
  import org.chromium.build.annotations.Initializer;
-@@ -2142,6 +2144,7 @@ class TabImpl implements Tab, TabInternal {
+@@ -2165,6 +2167,7 @@ class TabImpl implements Tab, TabInternal {
       * @param errorCode The error code causing the page to fail loading.
       */
      void didFailPageLoad(int errorCode) {
@@ -59,7 +59,7 @@ index 90ea019..8e5280a 100644
          for (TabObserver observer : mObservers) {
              observer.onPageLoadFailed(this, errorCode);
          }
-@@ -2206,7 +2209,7 @@ class TabImpl implements Tab, TabInternal {
+@@ -2229,7 +2232,7 @@ class TabImpl implements Tab, TabInternal {
                      param.setInitiatorOrigin(initiatorOrigin);
                  }
                  loadUrl(param);
@@ -68,7 +68,7 @@ index 90ea019..8e5280a 100644
                  showRenderedPage();
              }
          }
-@@ -2214,6 +2217,88 @@ class TabImpl implements Tab, TabInternal {
+@@ -2237,6 +2240,88 @@ class TabImpl implements Tab, TabInternal {
          setLastNavigationCommittedTimestampMillis(System.currentTimeMillis());
      }
  
@@ -157,7 +157,7 @@ index 90ea019..8e5280a 100644
      private boolean maybeLaunchActivity(GURL url) {
          if (!ChromeFeatureList.isEnabled(ChromeFeatureList.ANDROID_SETTINGS_URL)) return false;
  
-@@ -2339,6 +2424,10 @@ class TabImpl implements Tab, TabInternal {
+@@ -2361,6 +2446,10 @@ class TabImpl implements Tab, TabInternal {
          mPendingNativePageHost = null;
  
          if (nativePage != null) {
@@ -168,7 +168,7 @@ index 90ea019..8e5280a 100644
              showNativePage(nativePage);
              notifyPageTitleChanged();
              notifyFaviconChanged();
-@@ -2454,6 +2543,7 @@ class TabImpl implements Tab, TabInternal {
+@@ -2490,6 +2579,7 @@ class TabImpl implements Tab, TabInternal {
  
      /** Called to notify when the page had painted something non-empty. */
      void notifyDidFirstVisuallyNonEmptyPaint() {
@@ -177,10 +177,10 @@ index 90ea019..8e5280a 100644
              onBackgroundColorChanged();
          }
 diff --git a/chrome/browser/tab/java/src/org/chromium/chrome/browser/tab/Tab.java b/chrome/browser/tab/java/src/org/chromium/chrome/browser/tab/Tab.java
-index abc3656..0d9dfce 100644
+index ed9557d..3427666 100644
 --- a/chrome/browser/tab/java/src/org/chromium/chrome/browser/tab/Tab.java
 +++ b/chrome/browser/tab/java/src/org/chromium/chrome/browser/tab/Tab.java
-@@ -190,6 +190,12 @@ public interface Tab extends TabLifecycle {
+@@ -192,6 +192,12 @@ public interface Tab extends TabLifecycle {
      /** Returns whether or not the {@link Tab} represents a {@link NativePage}. */
      boolean isNativePage();
  
