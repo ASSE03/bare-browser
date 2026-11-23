@@ -1,0 +1,66 @@
+diff --git a/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java b/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
+index da82a7e..e3c53b0 100644
+--- a/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
++++ b/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
+@@ -6247,9 +6247,11 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+                     // The new tab opens before the old ones close. Chromium closes a window left
+                     // with no tab at all, even for a moment, which shut Bare as it reopened.
+                     if (closeTabs) {
++                        // A link opened from another app started this window: keep its tab.
+                         BareClearOnExit.replaceAllTabs(
+                                 selector,
+-                                this::openStartPageAfterClear);
++                                this::openStartPageAfterClear,
++                                /* keepExternalAppTabs= */ true);
+                     }
+                     step.run();
+                 });
+diff --git a/chrome/android/java/src/org/chromium/chrome/browser/bare/BareClearOnExit.java b/chrome/android/java/src/org/chromium/chrome/browser/bare/BareClearOnExit.java
+index f04f5c2..7cbcacb 100644
+--- a/chrome/android/java/src/org/chromium/chrome/browser/bare/BareClearOnExit.java
++++ b/chrome/android/java/src/org/chromium/chrome/browser/bare/BareClearOnExit.java
+@@ -13,6 +13,7 @@ import org.chromium.chrome.browser.preferences.ChromeSharedPreferences;
+ import org.chromium.chrome.browser.preferences.Pref;
+ import org.chromium.chrome.browser.profiles.Profile;
+ import org.chromium.chrome.browser.tab.Tab;
++import org.chromium.chrome.browser.tab.TabLaunchType;
+ import org.chromium.chrome.browser.tabmodel.TabClosureParams;
+ import org.chromium.chrome.browser.tabmodel.TabModel;
+ import org.chromium.chrome.browser.tabmodel.TabModelSelector;
+@@ -170,16 +171,34 @@ public final class BareClearOnExit {
+      * first so the window never holds zero tabs, which Chromium answers by closing it.
+      */
+     public static void replaceAllTabs(TabModelSelector selector, Runnable openNewTab) {
++        replaceAllTabs(selector, openNewTab, /* keepExternalAppTabs= */ false);
++    }
++
++    /**
++     * As {@link #replaceAllTabs(TabModelSelector, Runnable)}. With {@code keepExternalAppTabs},
++     * tabs this start opened for another app (a link tapped in a mail app, say) stay, and when
++     * one does no start page is opened: the link is what the user came for. Tabs restored from
++     * the previous run are FROM_RESTORE, so they are closed as before.
++     */
++    public static void replaceAllTabs(
++            TabModelSelector selector, Runnable openNewTab, boolean keepExternalAppTabs) {
+         List<List<Tab>> before = new ArrayList<>();
++        boolean kept = false;
+         for (TabModel model : selector.getModels()) {
+             List<Tab> tabs = new ArrayList<>();
+             for (int i = 0; i < model.getCount(); i++) {
+                 Tab tab = model.getTabAt(i);
+-                if (tab != null) tabs.add(tab);
++                if (tab == null) continue;
++                if (keepExternalAppTabs
++                        && tab.getLaunchType() == TabLaunchType.FROM_EXTERNAL_APP) {
++                    kept = true;
++                    continue;
++                }
++                tabs.add(tab);
+             }
+             before.add(tabs);
+         }
+-        openNewTab.run();
++        if (!kept) openNewTab.run();
+         int index = 0;
+         for (TabModel model : selector.getModels()) {
+             List<Tab> tabs = before.get(index++);

@@ -18,6 +18,7 @@ collision avec un numéro que Bare utilisera plus tard.
 | `9000005.patch` | Ouvrir un favori depuis l'écran des favoris n'affiche plus brièvement le contenu précédent de l'onglet (site d'avant ou racine des favoris) : l'onglet affiche le dossier de favoris jusqu'au premier affichage du site (quelques secondes au maximum). |
 | `9000006.patch` | Les favoris s'ouvrent dans l'onglet courant, sous la barre d'adresse, au lieu d'un écran séparé. Retour revient à la page d'avant. |
 | `9000007.patch` | Une page d'accueil Favoris (au démarrage ou après le nettoyage) s'ouvre directement sur le dossier Barre de favoris, dans l'onglet ouvert. |
+| `9000008.patch` | Un lien ouvert depuis une autre appli (mail…) alors que Bare avait été balayé des applis récentes s'affiche : le nettoyage ferme les anciens onglets mais garde celui du lien, sans ouvrir la page d'accueil. |
 
 ## Vérification automatique
 
