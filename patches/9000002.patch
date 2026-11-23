@@ -1,8 +1,8 @@
 diff --git a/chrome/android/BUILD.gn b/chrome/android/BUILD.gn
-index f8ed652..4ad13c4 100644
+index 9e72a40..8c3899e 100644
 --- a/chrome/android/BUILD.gn
 +++ b/chrome/android/BUILD.gn
-@@ -2264,6 +2264,7 @@ if (_is_default_toolchain) {
+@@ -2288,6 +2288,7 @@ if (_is_default_toolchain) {
        "java/src/org/chromium/chrome/browser/GracefulShutdownService.java",
        "java/src/org/chromium/chrome/browser/actor/ActorForegroundService.java",
        "java/src/org/chromium/chrome/browser/bare/backup/BareDirectService.java",
@@ -11,10 +11,10 @@ index f8ed652..4ad13c4 100644
        "java/src/org/chromium/chrome/browser/app/serial/SerialNotificationService.java",
        "java/src/org/chromium/chrome/browser/app/usb/UsbNotificationService.java",
 diff --git a/chrome/android/chrome_java_sources.gni b/chrome/android/chrome_java_sources.gni
-index 69de1e1..8abf571 100644
+index c358a53..347ee7b 100644
 --- a/chrome/android/chrome_java_sources.gni
 +++ b/chrome/android/chrome_java_sources.gni
-@@ -295,6 +295,7 @@ chrome_java_sources = [
+@@ -292,6 +292,7 @@ chrome_java_sources = [
    "java/src/org/chromium/chrome/browser/bare/BareClearOnExit.java",
    "java/src/org/chromium/chrome/browser/bare/BareDiagnostics.java",
    "java/src/org/chromium/chrome/browser/bare/BareClearVeil.java",
@@ -23,10 +23,10 @@ index 69de1e1..8abf571 100644
    "java/src/org/chromium/chrome/browser/bare/BareAddressBarPreviewView.java",
    "java/src/org/chromium/chrome/browser/bare/BareGoldenGateView.java",
 diff --git a/chrome/android/java/AndroidManifest.xml b/chrome/android/java/AndroidManifest.xml
-index b1482d2..9fd71e2 100644
+index b757dad..877cbe2 100644
 --- a/chrome/android/java/AndroidManifest.xml
 +++ b/chrome/android/java/AndroidManifest.xml
-@@ -1095,6 +1095,11 @@ by a child template that "extends" this file.
+@@ -1085,6 +1085,11 @@ by a child template that "extends" this file.
              android:foregroundServiceType="connectedDevice" android:exported="false">
          </service>
  
@@ -56,20 +56,20 @@ index 354ca7c..c9890cd 100644
          android:key="bare_clear_history"
          android:persistent="false"
 diff --git a/chrome/android/java/res_chromium_base/values/channel_constants.xml b/chrome/android/java/res_chromium_base/values/channel_constants.xml
-index 998b5ff..0613951 100644
+index 4f3e17e..bca9d97 100644
 --- a/chrome/android/java/res_chromium_base/values/channel_constants.xml
 +++ b/chrome/android/java/res_chromium_base/values/channel_constants.xml
 @@ -75,6 +75,8 @@ found in the LICENSE file.
-     <string name="bare_page_translation_title" translatable="false">Translate pages with Google</string>
-     <string name="bare_leave_as_exit_title" translatable="false">Treat leaving the app as exit</string>
-     <string name="bare_leave_as_exit_summary" translatable="false">When you leave Bare, what is selected below is cleared right away, as with Exit. Opening a file picker, the share sheet or Settings does not count as leaving.</string>
+     <string name="bare_video_choose_title">Choose the video to download</string>
+     <string name="bare_video_which_one">Can’t tell which video this is</string>
+     <string name="bare_welcome_security_note">Websites can still use the information they receive, and characteristics of your browser, to recognize or track a visitor.</string>
 +    <string name="bare_clear_on_swipe_title" translatable="false">Clear when swiped from recent apps</string>
 +    <string name="bare_clear_on_swipe_summary" translatable="false">Closing Bare from the recent apps screen clears what is selected below, as with Exit. If Android ends Bare before the clear is done, it finishes the next time you open Bare, before any page is shown.</string>
-     <string name="bare_clear_close_tabs_title" translatable="false">Close all tabs</string>
-     <string name="bare_clear_close_tabs_summary" translatable="false">Normal and private tabs. Nothing is kept to reopen.</string>
-     <string name="bare_translate_own_category" translatable="false">My own server</string>
+     <string name="bare_page_translation_title">Translate pages with Google</string>
+     <string name="bare_leave_as_exit_title">Treat leaving the app as exit</string>
+     <string name="bare_leave_as_exit_summary">When you leave Bare, what is selected below is cleared right away, as with Exit. Opening a file picker, the share sheet or Settings does not count as leaving.</string>
 diff --git a/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java b/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
-index 75fc14b..1c8db11 100644
+index e70d8b2..9bbcd20 100644
 --- a/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
 +++ b/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
 @@ -115,6 +115,7 @@ import org.chromium.chrome.browser.auxiliary_search.module.AuxiliarySearchModule
@@ -80,7 +80,7 @@ index 75fc14b..1c8db11 100644
  import org.chromium.chrome.browser.bare.BareNewTabRise;
  import org.chromium.chrome.browser.back_press.MinimizeAppAndCloseTabBackPressHandler;
  import org.chromium.chrome.browser.back_press.MinimizeAppAndCloseTabBackPressHandler.MinimizeAppAndCloseTabType;
-@@ -6028,6 +6029,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+@@ -6100,6 +6101,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
      public void onStart() {
          try (TraceEvent e = TraceEvent.scoped("ChromeTabbedActivity.onStart")) {
              super.onStart();
@@ -88,7 +88,7 @@ index 75fc14b..1c8db11 100644
              if (BareClearVeil.isPending()) {
                  BareClearVeil.show(this);
                  finishInterruptedClear();
-@@ -6035,6 +6037,35 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+@@ -6107,6 +6109,35 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
          }
      }
  
@@ -124,7 +124,7 @@ index 75fc14b..1c8db11 100644
      /** Set when Bare starts another screen itself, so that going there is not leaving the app. */
      private boolean mStartedOtherScreen;
  
-@@ -6076,10 +6107,35 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+@@ -6148,10 +6179,35 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
          if (profile == null) return;
          Profile original = profile.getOriginalProfile();
          if (!BareClearOnExit.hasWork(original)) return;
@@ -163,7 +163,7 @@ index 75fc14b..1c8db11 100644
      }
  
      /** Set once this activity has taken over what an earlier run left pending. */
-@@ -6105,6 +6161,9 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+@@ -6177,6 +6233,9 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
          }
          mInterruptedClearTaken = true;
          Profile original = profileProvider.getOriginalProfile();
@@ -173,7 +173,7 @@ index 75fc14b..1c8db11 100644
          if (!BareClearVeil.isPending()) {
              BareClearOnExit.resumeIfInterrupted(original, () -> {});
              return;
-@@ -6113,13 +6172,23 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+@@ -6185,13 +6244,23 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
          int[] stepsLeft = {2};
          Runnable step =
                  () -> {
@@ -200,7 +200,7 @@ index 75fc14b..1c8db11 100644
                      step.run();
                  });
      }
-@@ -6139,6 +6208,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+@@ -6211,6 +6280,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
          try (TraceEvent e = TraceEvent.scoped("ChromeTabbedActivity.onStop")) {
              super.onStop();
              clearIfLeaving();
@@ -461,10 +461,10 @@ index a01d7e9..5820908 100644
          assert closeTabs != null;
          closeTabs.setChecked(BareClearOnExit.isCloseTabs());
 diff --git a/chrome/browser/bare/backup/backup_settings.cc b/chrome/browser/bare/backup/backup_settings.cc
-index e531c0e..cc209db 100644
+index c06d071..9c7050e 100644
 --- a/chrome/browser/bare/backup/backup_settings.cc
 +++ b/chrome/browser/bare/backup/backup_settings.cc
-@@ -388,6 +388,7 @@ constexpr Setting kSettings[] = {
+@@ -389,6 +389,7 @@ constexpr Setting kSettings[] = {
      {P, kSetup, "bare.clear_on_exit_types", kInt, IntRange<0, 63>},
      {A, kSetup, "Bare.ClearOnExit.CloseTabs", kBool, AnyBool},
      {A, kSetup, "Bare.ClearOnExit.LeaveAsExit", kBool, AnyBool},
@@ -473,10 +473,10 @@ index e531c0e..cc209db 100644
      {P, kSetup, "https_only_mode_enabled", kBool, AnyBool},
      {P, kSetup, "bare.canvas_block_enabled", kBool, AnyBool},
 diff --git a/chrome/browser/preferences/android/java/src/org/chromium/chrome/browser/preferences/ChromePreferenceKeys.java b/chrome/browser/preferences/android/java/src/org/chromium/chrome/browser/preferences/ChromePreferenceKeys.java
-index ff570aa..bab5d63 100644
+index 9b98b04..63c09c5 100644
 --- a/chrome/browser/preferences/android/java/src/org/chromium/chrome/browser/preferences/ChromePreferenceKeys.java
 +++ b/chrome/browser/preferences/android/java/src/org/chromium/chrome/browser/preferences/ChromePreferenceKeys.java
-@@ -488,6 +488,12 @@ public final class ChromePreferenceKeys {
+@@ -500,6 +500,12 @@ public final class ChromePreferenceKeys {
      public static final String BARE_LEAVE_AS_EXIT = "Bare.ClearOnExit.LeaveAsExit";
      public static final String BARE_CLEAR_CLOSE_TABS = "Bare.ClearOnExit.CloseTabs";
      public static final String BARE_CLEAR_VEIL_PENDING = "Bare.ClearOnExit.VeilPending";
@@ -489,7 +489,7 @@ index ff570aa..bab5d63 100644
  
      /** Whether the vertical tabs drawer shows its tabs as a grid, two to a row. */
      public static final String BARE_VERTICAL_TABS_GRID = "Chrome.Bare.VerticalTabsGrid";
-@@ -1536,6 +1542,9 @@ public final class ChromePreferenceKeys {
+@@ -1546,6 +1552,9 @@ public final class ChromePreferenceKeys {
                  BARE_LEAVE_AS_EXIT,
                  BARE_CLEAR_CLOSE_TABS,
                  BARE_CLEAR_VEIL_PENDING,

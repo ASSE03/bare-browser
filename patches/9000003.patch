@@ -25,13 +25,13 @@ index 4f68c53..1e1df55 100644
          }
          SnackbarManager snackbarManager = mParentContext.getSnackbarManager();
 diff --git a/chrome/android/java/src/org/chromium/chrome/browser/undo_tab_close_snackbar/UndoBarController.java b/chrome/android/java/src/org/chromium/chrome/browser/undo_tab_close_snackbar/UndoBarController.java
-index 1194b1f..acef8eb 100644
+index 474db4e..345db58 100644
 --- a/chrome/android/java/src/org/chromium/chrome/browser/undo_tab_close_snackbar/UndoBarController.java
 +++ b/chrome/android/java/src/org/chromium/chrome/browser/undo_tab_close_snackbar/UndoBarController.java
-@@ -35,6 +35,12 @@ import java.util.Queue;
- @NullMarked
- public abstract class UndoBarController
-         implements SnackbarManager.SnackbarController, UndoBarThrottle {
+@@ -60,6 +60,12 @@ public abstract class UndoBarController
+         }
+     }
+ 
 +    /**
 +     * Bare: no "Tab closed, Undo" bar. A closing is committed at once, exactly as when the bar
 +     * times out unanswered; closed pages stay in History.
@@ -41,15 +41,18 @@ index 1194b1f..acef8eb 100644
      private final TokenHolder mThrottle = new TokenHolder(this::maybeProcessEvents);
      protected final TabModelSelector mTabModelSelector;
      protected final SnackbarManager.SnackbarManageable mSnackbarManageable;
-@@ -132,6 +138,11 @@ public abstract class UndoBarController
-         UndoActionData undoActionData =
-                 new UndoActionData(closedTabs, savedTabGroupSyncIds, umaType);
+@@ -217,6 +223,14 @@ public abstract class UndoBarController
+     private void showUndoBar(UndoClosureSnapshot snapshot) {
+         if (snapshot.isEmpty()) return;
  
 +        if (!SHOW_UNDO_BAR) {
-+            onDismissNoAction(undoActionData);
++            // As onDismissNoAction() does for a bar that timed out: commit every closed tab.
++            for (@TabId int tabId : new ShownBar(snapshot).mRemaining) {
++                commitTabClosure(tabId);
++            }
 +            return;
 +        }
 +
-         mSnackbarManageable
-                 .getSnackbarManager()
-                 .showSnackbar(
+         UndoBarContent barContent = UndoBarContentFactory.create(mContext, snapshot);
+ 
+         // showSnackbar() silently drops the bar when it cannot be shown; only track shown bars.
