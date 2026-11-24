@@ -47,10 +47,10 @@ index 0000000..551e6c3
 +</resources>
 diff --git a/chrome/android/java/res_chromium_base/values-fr/bare_strings_fr.xml b/chrome/android/java/res_chromium_base/values-fr/bare_strings_fr.xml
 new file mode 100644
-index 0000000..4bf003b
+index 0000000..54378e3
 --- /dev/null
 +++ b/chrome/android/java/res_chromium_base/values-fr/bare_strings_fr.xml
-@@ -0,0 +1,258 @@
+@@ -0,0 +1,13 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- Copyright 2026 The Chromium Authors
 +     Use of this source code is governed by a BSD-style license that can be
@@ -58,256 +58,11 @@ index 0000000..4bf003b
 +
 +<!-- Bare: French text for Bare's own strings. -->
 +<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="ExtraTranslation">
-+    <string name="bare_ntp_engine_title">Rechercher sur cette page avec</string>
-+    <string name="bare_ntp_engine_choose">Choisir le moteur de recherche</string>
-+    <string name="bare_welcome_title">Bienvenue dans Bare</string>
-+    <string name="bare_welcome_lead">Façonné par la communauté.</string>
-+    <string name="bare_welcome_sub">Un peu moins de bruit. Beaucoup plus de Web.</string>
-+    <string name="bare_welcome_get_started">Commencer</string>
-+    <string name="bare_welcome_next">Suivant</string>
-+    <string name="bare_welcome_back">Retour</string>
-+    <string name="bare_welcome_step">Étape %1$d sur %2$d</string>
-+    <string name="bare_welcome_yours_title">Personnalisez Bare</string>
-+    <string name="bare_welcome_yours_intro">Configurez l’essentiel. Vous pourrez tout modifier plus tard dans les paramètres.</string>
-+    <string name="bare_toolbar_page_title">Barre d’adresse et barre d’outils</string>
-+    <string name="bare_toolbar_section_layout">Disposition</string>
-+    <string name="bare_toolbar_section_buttons">Boutons</string>
-+    <string name="bare_toolbar_section_gestures">Gestes</string>
-+    <string name="bare_look_and_feel_title">Apparence et ergonomie</string>
-+    <string name="bare_toolbar_menu_left_title">Menu à gauche</string>
-+    <string name="bare_toolbar_menu_left_summary">Inverse le menu et le premier bouton : menu à gauche, panneau latéral à droite</string>
-+    <string name="bare_toolbar_menu_left_summary_minimal">Uniquement pour la barre complète. La barre minimale garde le menu à droite</string>
-+    <string name="bare_toolbar_always_visible_title">Garder la barre d’outils visible</string>
-+    <string name="bare_toolbar_always_visible_summary">La barre d’outils reste à l’écran pendant le défilement, dans les deux dispositions</string>
-+    <string name="bare_toolbar_preview_hint">Appuyez sur un bouton pour choisir son action</string>
-+    <string name="bare_toolbar_preview_legend">Appuyez pour modifier</string>
-+    <string name="bare_welcome_toolbar_title">Votre barre d’outils</string>
-+    <string name="bare_welcome_toolbar_intro">Choisissez la disposition, les boutons et l’action d’un balayage.</string>
-+    <string name="bare_welcome_opt_minimal">Barre d’adresse minimale</string>
-+    <string name="bare_welcome_hint_minimal">Une seule ligne : la barre d’adresse avec Nouvel onglet, Onglets et Menu. S’applique après un redémarrage</string>
-+    <string name="bare_welcome_opt_first_button">Premier bouton de la barre d’outils</string>
-+    <string name="bare_welcome_hint_first_button">Le bouton à l’extrémité gauche de la barre du bas</string>
-+    <string name="bare_welcome_hint_first_button_minimal">Le bouton à gauche de la barre d’adresse</string>
-+    <string name="bare_welcome_opt_second_button">Deuxième bouton de la barre d’outils</string>
-+    <string name="bare_welcome_hint_second_button">Le bouton juste à côté</string>
-+    <string name="bare_welcome_opt_address_swipe">Balayer la barre d’adresse</string>
-+    <string name="bare_welcome_hint_address_swipe">Faites-la glisser à gauche ou à droite pour changer d’onglet</string>
-+    <string name="bare_welcome_opt_bar_swipe">Balayer la barre du bas</string>
-+    <string name="bare_welcome_hint_bar_swipe">L’action d’un glissement latéral sur la barre</string>
-+    <string name="bare_welcome_opt_menu">Menu</string>
-+    <string name="bare_welcome_hint_menu">Comment le menu s’ouvre</string>
-+    <string name="bare_welcome_menu_card_value">Menu Bare</string>
-+    <string name="bare_welcome_menu_classic_value">Classique</string>
-+    <string name="bare_welcome_menu_card_option">Menu Bare : une carte qui monte depuis la barre d’outils</string>
-+    <string name="bare_welcome_menu_classic_option">Menu déroulant classique</string>
-+    <string name="bare_upgrade_menu_title">Votre menu</string>
-+    <string name="bare_upgrade_menu_intro">Choisissez comment le menu s’ouvre. Vous pourrez le modifier plus tard dans Paramètres, Apparence et ergonomie.</string>
-+    <string name="bare_upgrade_menu_picture_card">Le menu sous forme de carte qui monte depuis la barre d’outils</string>
-+    <string name="bare_upgrade_menu_picture_classic">Le menu sous forme de liste qui s’ouvre depuis le bouton de menu</string>
-+    <string name="bare_upgrade_skip">Ignorer</string>
-+    <string name="bare_welcome_security_title">Sécurité</string>
-+    <string name="bare_welcome_security_intro">Des réglages qui limitent ce que les pages peuvent atteindre ou apprendre de votre connexion. Vous pourrez les modifier plus tard dans Paramètres, Bare Guard.</string>
-+    <string name="bare_welcome_opt_https">Connexions sécurisées</string>
-+    <string name="bare_welcome_hint_https">Ouvrir les pages en https et avertir avant une page en http simple</string>
-+    <string name="bare_welcome_opt_cookies">Bloquer les cookies tiers</string>
-+    <string name="bare_welcome_hint_cookies">Les autres sites ne peuvent pas déposer de cookies pendant que vous en consultez un</string>
-+    <string name="bare_welcome_opt_webrtc">Masquer l’adresse sur le réseau local</string>
-+    <string name="bare_welcome_hint_webrtc">Les sites ne peuvent pas connaître l’adresse de votre téléphone sur votre réseau</string>
-+    <string name="bare_welcome_opt_hardened">JavaScript renforcé</string>
-+    <string name="bare_welcome_hint_hardened">Plus sûr face aux failles de navigateur, plus lent sur les sites lourds</string>
-+    <string name="bare_video_choose_title">Choisir la vidéo à télécharger</string>
-+    <string name="bare_video_which_one">Impossible de savoir de quelle vidéo il s’agit</string>
-+    <string name="bare_welcome_security_note">Les sites Web peuvent toujours utiliser les informations qu’ils reçoivent, ainsi que les caractéristiques de votre navigateur, pour reconnaître ou suivre un visiteur.</string>
-+    <string name="bare_page_translation_title">Traduire les pages avec Google</string>
-+    <string name="bare_leave_as_exit_title">Considérer la sortie de l’appli comme Quitter</string>
-+    <string name="bare_leave_as_exit_summary">Quand vous quittez Bare, ce qui est sélectionné ci-dessous est effacé immédiatement, comme avec Quitter. Ouvrir un sélecteur de fichiers, le menu de partage ou les paramètres n’est pas considéré comme une sortie.</string>
-+    <string name="bare_clear_close_tabs_title">Fermer tous les onglets</string>
-+    <string name="bare_clear_close_tabs_summary">Onglets normaux et privés. Rien n’est conservé pour être rouvert.</string>
-+    <string name="bare_translate_own_category">Mon propre serveur</string>
-+    <string name="bare_translate_own_title">Traduire les pages avec mon propre serveur</string>
-+    <string name="bare_translate_own_summary">Ajoute Traduire au menu et envoie le texte de la page au serveur ci-dessous, pas à Google. Désactive Google. Désactivé par défaut.</string>
-+    <string name="bare_page_translation_summary">Ajoute Traduire au menu et aux choix sous Apparence, Raccourci de la barre d’adresse. Votre raccourci n’est pas modifié. Désactivé par défaut.</string>
-+    <string name="bare_page_translation_about">La traduction n’a lieu que lorsque vous choisissez d’envoyer la page actuelle. Bare ne la propose jamais automatiquement. Dans ce cas, le texte de la page est envoyé à Google, qui peut le voir. Les autres onglets ne sont pas envoyés. Google reçoit aussi votre adresse IP, comme pour toute requête, et peut obtenir d’autres informations sur la page. Bare ne contrôle pas le service de Google, qui peut cesser de fonctionner.</string>
-+    <string name="bare_canvas_menu_allow">Autoriser la lecture du canvas</string>
-+    <string name="bare_canvas_menu_block">Bloquer la lecture du canvas</string>
-+    <string name="bare_security_canvas_title">Bloquer la lecture du canvas</string>
-+    <string name="bare_security_canvas_summary">Les sites qui lisent les pixels d’un canvas reçoivent un canvas vide. Ce que vous voyez ne change pas. Concerne uniquement le canvas : pas l’audio, les polices ni les infos de l’appareil, les tests d’empreinte peuvent donc encore vous trouver unique. Certains sites ont besoin de lire le canvas pour fonctionner ; autorisez-les depuis le menu. S’applique aux nouvelles pages.</string>
-+    <string name="bare_security_canvas_allowed">Sites autorisés à lire le canvas</string>
-+    <string name="bare_security_canvas_allowed_remove">Appuyez pour supprimer</string>
-+    <string name="bare_welcome_canvas_title">Lecture du canvas</string>
-+    <string name="bare_welcome_canvas_intro">Les sites peuvent lire les pixels d’un canvas caché pour reconnaître votre navigateur. Bare peut leur fournir un canvas vide à la place.</string>
-+    <string name="bare_welcome_canvas_step_ask">Le site lit les pixels du canvas</string>
-+    <string name="bare_welcome_canvas_step_blank">Bare fournit un canvas vide</string>
-+    <string name="bare_welcome_canvas_step_receive">Le site n’obtient rien de reconnaissable</string>
-+    <string name="bare_welcome_canvas_screen_unchanged">Ce que vous voyez ne change pas</string>
-+    <string name="bare_welcome_canvas_picture_description">Un site lit les pixels d’un canvas, Bare lui fournit un canvas vide et le site n’obtient rien de reconnaissable. Ce que vous voyez ne change pas.</string>
-+    <string name="bare_welcome_canvas_step_pass">Bare les transmet tels quels</string>
-+    <string name="bare_welcome_canvas_step_known">Le site peut s’en servir pour vous reconnaître</string>
-+    <string name="bare_welcome_canvas_picture_description_off">Un site lit les pixels d’un canvas et les obtient tels quels, ce qui peut l’aider à reconnaître votre navigateur. Ce que vous voyez ne change pas.</string>
-+    <string name="bare_welcome_opt_canvas">Bloquer la lecture du canvas</string>
-+    <string name="bare_welcome_hint_canvas">S’applique aux nouvelles pages</string>
-+    <string name="bare_welcome_canvas_note">Uniquement le canvas. Pas l’audio, les polices ni les infos de l’appareil. Les tests d’empreinte peuvent encore vous trouver unique. Certains sites ont besoin de lire le canvas pour fonctionner ; autorisez-les depuis le menu. Également dans Paramètres, Bare Guard.</string>
-+    <string name="bare_welcome_translate_title">Traduction des pages</string>
-+    <string name="bare_welcome_translate_intro">Bare ne traduit une page que lorsque vous l’envoyez. Il ne propose jamais de traduction de lui-même.</string>
-+    <string name="bare_welcome_opt_translate">Traduire les pages avec Google</string>
-+    <string name="bare_welcome_hint_translate">Ajoute Traduire au menu</string>
-+    <string name="bare_welcome_translate_where">L’option apparaît aussi parmi les choix du raccourci de la barre d’adresse. Votre raccourci actuel reste inchangé.</string>
-+    <string name="bare_welcome_translate_note">Quand vous traduisez, le texte de la page est envoyé à Google, qui peut le voir. Les autres onglets ne sont pas envoyés. Google reçoit aussi votre adresse IP et peut obtenir d’autres informations sur la page. Bare ne gère pas le service de Google, qui peut cesser de fonctionner. Vous pouvez modifier ce réglage dans Paramètres, Traduire les pages.</string>
-+    <string name="bare_welcome_browsing_title">Téléchargements, médias et notifications</string>
-+    <string name="bare_welcome_browsing_intro">Choisissez le comportement des téléchargements, de l’audio et des notifications.</string>
-+    <string name="bare_welcome_ready_title">Valeurs par défaut et mises à jour</string>
-+    <string name="bare_welcome_ready_intro">Choisissez si les liens des autres applis s’ouvrent dans Bare, et comment il recherche les nouvelles versions.</string>
-+    <string name="bare_welcome_opt_search">Moteur de recherche par défaut</string>
-+    <string name="bare_welcome_hint_search">Utilisé quand vous recherchez depuis la barre d’adresse</string>
-+    <string name="bare_welcome_opt_ad_blocker">Bloqueur de publicités</string>
-+    <string name="bare_welcome_hint_ad_blocker">Bloque les publicités et les traqueurs avec uBlock Origin</string>
-+    <string name="bare_welcome_opt_address_bar">Barre d’adresse</string>
-+    <string name="bare_welcome_hint_address_bar">En haut, ou en bas à portée de pouce</string>
-+    <string name="bare_welcome_opt_downloads">Gestionnaire de téléchargements externe</string>
-+    <string name="bare_welcome_hint_downloads">Confier les téléchargements à une autre appli au lieu de les enregistrer dans Bare</string>
-+    <string name="bare_welcome_opt_download_sign_in">Partager la connexion avec l’appli</string>
-+    <string name="bare_welcome_hint_download_sign_in">Envoie aussi vos cookies pour le site du fichier. Désactivé par défaut</string>
-+    <string name="bare_welcome_opt_background_media">Lecture des médias en arrière-plan</string>
-+    <string name="bare_welcome_hint_background_media">Continuer la lecture audio quand vous changez d’appli ou verrouillez l’écran</string>
-+    <string name="bare_welcome_opt_notifications">Autoriser les notifications</string>
-+    <string name="bare_welcome_hint_notifications">Progression des téléchargements, et sites que vous autorisez à vous notifier. Android vous demande de confirmer.</string>
-+    <string name="bare_welcome_hint_notifications_on">Autorisées. Pour les désactiver, utilisez les paramètres Android de Bare.</string>
-+    <string name="bare_welcome_hint_notifications_off">Progression des téléchargements, et sites que vous autorisez à vous notifier. À activer dans les paramètres Android de Bare.</string>
-+    <string name="bare_welcome_opt_default_browser">Faire de Bare votre navigateur par défaut</string>
-+    <string name="bare_welcome_hint_default_browser">Les liens des autres applis s’ouvriront dans Bare</string>
-+    <string name="bare_welcome_hint_default_browser_set">Bare est votre navigateur par défaut</string>
-+    <string name="bare_welcome_set_default">Définir par défaut</string>
-+    <string name="bare_welcome_hint_updates">Comment Bare recherche les nouvelles versions</string>
-+    <string name="bare_welcome_update_auto_title">Automatique</string>
-+    <string name="bare_welcome_update_auto_summary">Vérifie GitHub au plus une fois par jour quand Bare est ouvert</string>
-+    <string name="bare_welcome_update_manual_title">Manuelle</string>
-+    <string name="bare_welcome_update_manual_summary">Vérifie uniquement à votre demande, dans les paramètres</string>
-+    <string name="bare_welcome_update_remind_title">Manuelle, avec un rappel hebdomadaire</string>
-+    <string name="bare_welcome_update_remind_summary">Affiche un rappel dans Bare une fois par semaine et n’envoie rien</string>
-+    <string name="bare_welcome_updates_note">Bare vous prévient quand une nouvelle version sort. Il ne la télécharge ni ne l’installe jamais de lui-même.</string>
-+    <string name="bare_welcome_hint_open_links">Ouvrir un lien dans une appli installée quand elle peut le gérer</string>
-+    <string name="bare_app_icon_title">Icône de l’appli</string>
-+    <string name="bare_app_icon_light">Claire</string>
-+    <string name="bare_app_icon_dark">Sombre</string>
-+    <string name="bare_app_icon_retro">Rétro</string>
-+    <string name="bare_new_icon_title">Nouvelle icône</string>
-+    <string name="bare_new_icon_summary">Utiliser la nouvelle icône de Bare. Désactivez pour revenir à l’originale.</string>
-+    <string name="bare_toolbar_action_back">Retour</string>
-+    <string name="bare_toolbar_action_forward">Avancer</string>
-+    <string name="bare_toolbar_action_vertical_tabs">Onglets verticaux</string>
-+    <string name="bare_toolbar_action_tab_count">Nombre d’onglets</string>
-+    <string name="bare_toolbar_position_fourth">Quatrième bouton</string>
-+    <string name="bare_welcome_opt_fourth_button">Quatrième bouton de la barre d’outils</string>
-+    <string name="bare_welcome_hint_fourth_button">Le bouton à côté du menu</string>
-+    <string name="bare_settings_group_browser">VOTRE NAVIGATEUR</string>
-+    <string name="bare_settings_group_tools">PRÉFÉRENCES ET OUTILS</string>
 +    <string name="bare_settings_group_bare">BARE</string>
-+    <string name="bare_settings_cat_appearance">Apparence</string>
-+    <string name="bare_settings_cat_appearance_summary">Thème, barre d’outils, page d’accueil</string>
-+    <string name="bare_settings_cat_privacy">Confidentialité et sécurité</string>
-+    <string name="bare_settings_cat_privacy_summary">Protection, autorisations, données des sites</string>
-+    <string name="bare_incognito_settings_title">Navigation privée</string>
 +    <string name="bare_filter_title">BareFilter</string>
-+    <string name="bare_filter_summary">Masque les bannières d’appli et les pop-ups sur quelques sites, et se met à jour depuis GitHub. Une modification s’applique au prochain démarrage de Bare.</string>
-+    <string name="bare_settings_cat_extensions">Extensions</string>
-+    <string name="bare_settings_cat_extensions_summary">Gérer les modules complémentaires et le blocage</string>
-+    <string name="bare_settings_cat_browsing">Navigation</string>
-+    <string name="bare_settings_cat_browsing_summary">Recherche, onglets, téléchargements, médias et retour haptique</string>
-+    <string name="bare_media_haptics_title">Médias et retour haptique</string>
-+    <string name="bare_haptics_title">Retour haptique</string>
-+    <string name="bare_smooth_scrolling_title">Défilement fluide</string>
-+    <string name="bare_smooth_scrolling_restart_message">Le défilement reste tel quel jusqu’au redémarrage de Bare. Redémarrer maintenant ?</string>
-+    <string name="bare_smooth_scrolling_summary">Un mouvement rapide s’arrête là où votre doigt l’indique, comme dans une appli native, sans continuer sur plusieurs pages. Une modification ne s’applique qu’après le redémarrage de Bare</string>
-+    <string name="bare_menu_card_title">Menu Bare</string>
-+    <string name="bare_menu_card_summary">Le menu sous forme de carte qui monte depuis la barre d’outils. Désactivez pour le menu déroulant classique.</string>
-+    <string name="bare_ntp_logo_title">Icône Bare dans les nouveaux onglets</string>
-+    <string name="bare_ntp_logo_summary">Afficher l’icône Bare au centre d’un nouvel onglet</string>
-+    <string name="bare_glass_title">Verre dépoli</string>
-+    <string name="bare_glass_summary">Panneaux translucides et floutés, à commencer par le tiroir des onglets</string>
-+    <string name="bare_incognito_mode">Mode navigation privée</string>
-+    <string name="bare_incognito_fact_cookies">Cookies de session effacés à la fin</string>
-+    <string name="bare_incognito_fact_downloads">Les téléchargements et les favoris sont conservés</string>
-+    <string name="bare_incognito_fact_visible">Les sites Web et les réseaux peuvent toujours vous voir</string>
-+    <string name="bare_incognito_block_screenshots_title">Bloquer les captures d’écran en navigation privée</string>
-+    <string name="bare_incognito_block_screenshots_summary">Empêche les captures et l’enregistrement de l’écran tant qu’un onglet de navigation privée est ouvert</string>
-+    <string name="bare_incognito_block_screenshots_locked">Toujours bloqué quand le verrouillage de la navigation privée est activé.</string>
-+    <string name="bare_haptics_summary">Une petite vibration quand vous appuyez sur un bouton de la barre d’outils</string>
-+    <string name="bare_settings_cat_languages">Langues et traduction</string>
-+    <string name="bare_settings_cat_autofill">Saisie automatique et paiements</string>
-+    <string name="bare_settings_cat_notifications">Notifications</string>
-+    <string name="bare_settings_cat_accessibility">Accessibilité</string>
-+    <string name="bare_settings_cat_developer">Options pour les développeurs</string>
-+    <string name="bare_settings_cat_about">À propos de Bare</string>
-+    <string name="bare_settings_cat_updates">Rechercher des mises à jour</string>
-+    <string name="bare_vtabs_title">Onglets verticaux</string>
-+    <string name="bare_vtabs_view_options">Options d’affichage</string>
-+    <string name="bare_vtabs_list_view">Affichage en liste</string>
-+    <string name="bare_vtabs_grid_view">Affichage en grille</string>
-+    <string name="bare_vtabs_close">Fermer les onglets verticaux</string>
-+    <string name="bare_vtabs_empty">Aucun onglet ouvert</string>
-+    <string name="bare_vtabs_new_tab">Nouvel onglet</string>
-+    <string name="bare_vtabs_close_all">Tout fermer</string>
-+    <string name="bare_vtabs_close_tab">Fermer %1$s</string>
-+    <string name="bare_vtabs_row_current">%1$s, onglet actuel</string>
-+    <string name="bare_about_tagline">Privé par défaut</string>
-+    <string name="bare_about_version_title">Version de Bare</string>
-+    <string name="bare_about_chromium_title">Version de Chromium</string>
-+    <string name="bare_about_built_on">Bare est basé sur Chromium.</string>
-+    <string name="bare_made_with_love">Fait avec ❤️ à San Francisco</string>
-+    <string name="bare_welcome_made_with">Fait avec</string>
 +    <string name="bare_welcome_heart">❤️</string>
-+    <string name="bare_welcome_in_san_francisco">à San Francisco</string>
-+    <string name="bare_welcome_made_with_spoken">Fait avec amour à San Francisco</string>
-+    <string name="bare_welcome_start">Démarrer</string>
-+    <string name="bare_whats_new_title">Mis à jour</string>
-+    <string name="bare_whats_new_link">Voir les nouveautés</string>
-+    <string name="bare_whats_new_continue">Continuer</string>
-+    <string name="bare_whats_new_smooth">Un défilement fluide qui semble natif</string>
-+    <string name="bare_whats_new_menu_order">Réorganisez les éléments de votre menu</string>
-+    <string name="bare_whats_new_task_manager">Gestionnaire de tâches</string>
-+    <string name="bare_whats_new_toolbar_readable">Une barre d’outils lisible dans la barre minimale</string>
-+    <string name="bare_whats_new_storage">Une nouvelle page de stockage Bare</string>
-+    <string name="bare_whats_new_sidebar_button">Un bouton de panneau latéral plus réactif</string>
-+    <string name="bare_whats_new_suggestions">Les suggestions de recherche s’ouvrent quand vous appuyez dessus</string>
-+    <string name="bare_whats_new_ubo_update">uBlock Origin se met à jour tout seul, avec un interrupteur et un bouton Vérifier maintenant</string>
-+    <string name="bare_whats_new_205_chromium">Basé sur Chromium 157.0.8103.78, avec les derniers correctifs de sécurité.</string>
-+    <string name="bare_whats_new_205_player">Le lecteur vidéo de Bare : balayez vers le bas pour fermer, pincez pour zoomer, et un choix de qualité pour la vidéo en streaming.</string>
-+    <string name="bare_whats_new_205_bgaudio">Le son des vidéos continue quand vous changez d’appli ou éteignez l’écran.</string>
-+    <string name="bare_whats_new_205_canvas">Bloquer la lecture du canvas empêche les sites de vous identifier par empreinte via le canvas. Autorisez-la site par site depuis le menu.</string>
-+    <string name="bare_whats_new_205_bareguard">Bare Guard réunit les protections de Bare au même endroit, BareFilter compris.</string>
-+    <string name="bare_whats_new_205_leakcheck">La vérification des mots de passe divulgués, qui pouvait contacter Google, est désormais désactivée.</string>
-+    <string name="bare_whats_new_205_addressbar">Une barre d’adresse plus nette : un seul mouvement en appuyant dessus, plus de micro, et Coller s’affiche quand la barre est vide.</string>
-+    <string name="bare_whats_new_205_settings">Des paramètres mieux rangés : Barre d’adresse et barre d’outils, Apparence et ergonomie, et une page À propos avec les versions de Bare et de Chromium.</string>
-+    <string name="bare_whats_new_205_shortcuts">Les raccourcis du nouvel onglet forment une grille de 4 sur 2 qui défile, avec de la place pour 16.</string>
-+    <string name="bare_whats_new_205_downloads">Les téléchargements se font en plusieurs parties, se mettent en pause et reprennent plus tard, peuvent aller dans un dossier de votre choix et affichent leur progression en direct.</string>
-+    <string name="bare_whats_new_205_games">Pas d’Internet ? Jouez à Bare Fly, Bare Run ou Bare Racer, ou ouvrez bare://games à tout moment.</string>
-+    <string name="bare_whats_new_205_bareurl">Tapez bare:// pour ouvrir les pages propres à Bare, comme bare://flags.</string>
-+    <string name="bare_whats_new_205_smoothoff">Le défilement fluide est désormais désactivé par défaut : le défilement ressemble à celui de Chrome sur téléphone.</string>
-+    <string name="bare_whats_new_205_barhide">Sur un nouvel onglet, la barre se masque dès que vous faites défiler.</string>
-+    <string name="bare_whats_new_207_crx">L’ajout d’extensions depuis le Chrome Web Store, ou depuis un lien .crx, fonctionne à nouveau.</string>
-+    <string name="bare_whats_new_207_center">L’adresse est de nouveau centrée dans la barre d’adresse quand vous ne tapez pas.</string>
-+    <string name="bare_whats_new_207_downloads">Les téléchargements ne plantent plus sur certains téléphones Android 16.</string>
-+    <string name="bare_whats_new_207_ellipsis">Un nom de site trop long pour la barre d’adresse garde maintenant son début et se termine par des points de suspension, au lieu de perdre ses premières lettres.</string>
-+    <string name="bare_whats_new_206_toolbar">La barre d’outils se replie au défilement même avec TalkBack ou un autre service d’accessibilité activé. Pour la garder à l’écran, activez Garder la barre d’outils visible.</string>
-+    <string name="bare_whats_new_206_crash">Correction d’un plantage qui pouvait survenir avec la barre d’adresse en bas.</string>
-+    <string name="bare_welcome_restart">Revenir au début</string>
-+    <string name="bare_welcome_finish_caption">Tout peut être modifié plus tard dans les paramètres.</string>
-+    <string name="bare_welcome_value_top">En haut</string>
-+    <string name="bare_welcome_value_bottom">En bas</string>
-+    <string name="bare_welcome_value_off">Désactivé</string>
-+    <string name="bare_welcome_value_on">Activé</string>
-+    <string name="bare_welcome_value_ask">Demander à chaque fois</string>
-+    <string name="bare_welcome_value_noai">DuckDuckGo (sans IA)</string>
 +    <string name="bare_clear_on_swipe_title">Effacer au balayage depuis les applis récentes</string>
 +    <string name="bare_clear_on_swipe_summary">Fermer Bare depuis l’écran des applis récentes efface ce qui est sélectionné ci-dessous, comme avec Quitter. Si Android arrête Bare avant la fin de l’effacement, il se termine à la prochaine ouverture de Bare, avant l’affichage de toute page.</string>
-+    <plurals name="bare_vtabs_count">
-+        <item quantity="one">%d onglet ouvert</item>
-+        <item quantity="other">%d onglets ouverts</item>
-+    </plurals>
-+    <plurals name="bare_vtabs_private_count">
-+        <item quantity="one">%d onglet privé</item>
-+        <item quantity="other">%d onglets privés</item>
-+    </plurals>
 +</resources>
 diff --git a/chrome/app/resources/chromium_strings_fr.xtb b/chrome/app/resources/chromium_strings_fr.xtb
 index 53587e1..dbf84fe 100644
@@ -856,10 +611,10 @@ index 6bc57a5..2f1c9fb 100644
      "android/res/values/dimens.xml",
 diff --git a/chrome/browser/hub/internal/android/res/values-fr/bare_strings.xml b/chrome/browser/hub/internal/android/res/values-fr/bare_strings.xml
 new file mode 100644
-index 0000000..f7cd992
+index 0000000..300e3db
 --- /dev/null
 +++ b/chrome/browser/hub/internal/android/res/values-fr/bare_strings.xml
-@@ -0,0 +1,11 @@
+@@ -0,0 +1,8 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- Copyright 2026 The Chromium Authors
 +     Use of this source code is governed by a BSD-style license that can be
@@ -867,9 +622,6 @@ index 0000000..f7cd992
 +
 +<!-- Bare: French text for Bare's own strings. -->
 +<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="ExtraTranslation">
-+    <string name="bare_hub_view_menu">Affichage des onglets</string>
-+    <string name="bare_hub_view_grid">Grille</string>
-+    <string name="bare_hub_view_list">Liste</string>
 +</resources>
 diff --git a/chrome/browser/search_engines/android/BUILD.gn b/chrome/browser/search_engines/android/BUILD.gn
 index 593dbd2..8aa133b 100644
@@ -885,10 +637,10 @@ index 593dbd2..8aa133b 100644
      "java/res/values/ids.xml",
 diff --git a/chrome/browser/search_engines/android/java/res/values-fr/bare_strings.xml b/chrome/browser/search_engines/android/java/res/values-fr/bare_strings.xml
 new file mode 100644
-index 0000000..768bb1e
+index 0000000..300e3db
 --- /dev/null
 +++ b/chrome/browser/search_engines/android/java/res/values-fr/bare_strings.xml
-@@ -0,0 +1,12 @@
+@@ -0,0 +1,8 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- Copyright 2026 The Chromium Authors
 +     Use of this source code is governed by a BSD-style license that can be
@@ -896,10 +648,6 @@ index 0000000..768bb1e
 +
 +<!-- Bare: French text for Bare's own strings. -->
 +<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="ExtraTranslation">
-+    <string name="bare_search_suggestions_title">Suggestions de recherche</string>
-+    <string name="bare_search_suggestions_summary">Afficher des suggestions de recherche pendant la saisie</string>
-+    <string name="bare_history_urls_title">Suggérer des URL de l’historique</string>
-+    <string name="bare_history_urls_summary">Afficher les sites que vous avez consultés pendant la saisie</string>
 +</resources>
 diff --git a/chrome/browser/ui/android/omnibox/BUILD.gn b/chrome/browser/ui/android/omnibox/BUILD.gn
 index be82e1f..3632959 100644
@@ -915,10 +663,10 @@ index be82e1f..3632959 100644
      "java/res/values/dimens.xml",
 diff --git a/chrome/browser/ui/android/omnibox/java/res/values-fr/bare_strings.xml b/chrome/browser/ui/android/omnibox/java/res/values-fr/bare_strings.xml
 new file mode 100644
-index 0000000..a509ded
+index 0000000..300e3db
 --- /dev/null
 +++ b/chrome/browser/ui/android/omnibox/java/res/values-fr/bare_strings.xml
-@@ -0,0 +1,10 @@
+@@ -0,0 +1,8 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- Copyright 2026 The Chromium Authors
 +     Use of this source code is governed by a BSD-style license that can be
@@ -926,8 +674,6 @@ index 0000000..a509ded
 +
 +<!-- Bare: French text for Bare's own strings. -->
 +<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="ExtraTranslation">
-+    <string name="bare_engine_once_title">Rechercher une fois avec</string>
-+    <string name="bare_engine_incognito_title">Rechercher en navigation privée avec</string>
 +</resources>
 diff --git a/chrome/browser/ui/android/strings/translations/android_chrome_strings_fr.xtb b/chrome/browser/ui/android/strings/translations/android_chrome_strings_fr.xtb
 index fe6b944..10d1ebe 100644
