@@ -1,5 +1,5 @@
 diff --git a/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java b/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
-index 1536186..c3f150d 100644
+index 1536186..1370dcc 100644
 --- a/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
 +++ b/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
 @@ -126,6 +126,7 @@ import org.chromium.chrome.browser.bare.BareWelcomeOverlay;
@@ -19,7 +19,7 @@ index 1536186..c3f150d 100644
          PartnerBrowserCustomizations.getInstance()
                  .onCreateInitialTab(
                          url,
-@@ -6224,12 +6225,51 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+@@ -6224,12 +6225,65 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
              getTabCreator(/* incognito= */ false).launchNtp(TabLaunchType.FROM_CHROME_UI);
              return;
          }
@@ -46,18 +46,25 @@ index 1536186..c3f150d 100644
 +        if (model == null) {
 +            getTabCreator(incognito).launchUrl(url, type);
 +            return;
-         }
++        }
 +        BookmarkId loadedFolder =
 +                model.isBookmarkModelLoaded() ? model.getDesktopFolderId() : null;
 +        if (loadedFolder != null) {
-+            getTabCreator(incognito)
-+                    .launchUrl(BookmarkUiState.createFolderUrl(loadedFolder).toString(), type);
++            String folderUrl = BookmarkUiState.createFolderUrl(loadedFolder).toString();
++            rememberBookmarksBarUrl(folderUrl);
++            getTabCreator(incognito).launchUrl(folderUrl, type);
 +            return;
-+        }
-+        // The bookmarks are not loaded yet: open the list now (a window needs a tab), then move
-+        // it to the Bookmarks bar once loaded. The move is posted so that it runs after the
-+        // bookmarks page has applied its own first URL, which would otherwise win.
-+        Tab tab = getTabCreator(incognito).launchUrl(url, type);
+         }
++        // The bookmarks are not loaded yet. Open the Bookmarks bar folder remembered from an
++        // earlier start: the bookmarks page then shows it as soon as it loads, with no list of
++        // top-level folders first. Moving an already open list to the folder afterwards lost a
++        // race with the page applying its own first URL now and then.
++        String remembered =
++                ChromeSharedPreferences.getInstance()
++                        .readString(ChromePreferenceKeys.BARE_BOOKMARKS_BAR_URL, null);
++        boolean haveRemembered =
++                remembered != null && remembered.startsWith("chrome-native://bookmarks/folder/");
++        Tab tab = getTabCreator(incognito).launchUrl(haveRemembered ? remembered : url, type);
 +        if (tab == null) return;
 +        model.finishLoadingBookmarkModel(
 +                () ->
@@ -66,13 +73,42 @@ index 1536186..c3f150d 100644
 +                                () -> {
 +                                    BookmarkId folder = model.getDesktopFolderId();
 +                                    if (tab.isDestroyed() || folder == null) return;
-+                                    LoadUrlParams params =
-+                                            new LoadUrlParams(
-+                                                    BookmarkUiState.createFolderUrl(folder)
-+                                                            .toString());
++                                    String folderUrl =
++                                            BookmarkUiState.createFolderUrl(folder).toString();
++                                    rememberBookmarksBarUrl(folderUrl);
++                                    // First start, or the folder changed: move the tab there.
++                                    if (folderUrl.equals(remembered)) return;
++                                    LoadUrlParams params = new LoadUrlParams(folderUrl);
 +                                    params.setShouldReplaceCurrentEntry(true);
 +                                    tab.loadUrl(params);
 +                                }));
++    }
++
++    private static void rememberBookmarksBarUrl(String folderUrl) {
++        ChromeSharedPreferences.getInstance()
++                .writeString(ChromePreferenceKeys.BARE_BOOKMARKS_BAR_URL, folderUrl);
      }
  
      /** Set once this activity has taken over what an earlier run left pending. */
+diff --git a/chrome/browser/preferences/android/java/src/org/chromium/chrome/browser/preferences/ChromePreferenceKeys.java b/chrome/browser/preferences/android/java/src/org/chromium/chrome/browser/preferences/ChromePreferenceKeys.java
+index 63c09c5..8d597dc 100644
+--- a/chrome/browser/preferences/android/java/src/org/chromium/chrome/browser/preferences/ChromePreferenceKeys.java
++++ b/chrome/browser/preferences/android/java/src/org/chromium/chrome/browser/preferences/ChromePreferenceKeys.java
+@@ -507,6 +507,9 @@ public final class ChromePreferenceKeys {
+     /** Set when a start has found Bare was swiped away and the clear has not finished yet. */
+     public static final String BARE_CLEAR_SWIPE_PENDING = "Bare.ClearOnExit.SwipePending";
+ 
++    /** Bare: URL of the Bookmarks bar folder, for opening it at start before bookmarks load. */
++    public static final String BARE_BOOKMARKS_BAR_URL = "Bare.Bookmarks.BarFolderUrl";
++
+     /** Whether the vertical tabs drawer shows its tabs as a grid, two to a row. */
+     public static final String BARE_VERTICAL_TABS_GRID = "Chrome.Bare.VerticalTabsGrid";
+ 
+@@ -1555,6 +1558,7 @@ public final class ChromePreferenceKeys {
+                 BARE_CLEAR_ON_SWIPE,
+                 BARE_CLEAR_SWIPE_ARMED,
+                 BARE_CLEAR_SWIPE_PENDING,
++                BARE_BOOKMARKS_BAR_URL,
+                 BARE_LAUNCHER_ICON,
+                 BARE_VERTICAL_TABS_GRID,
+                 BARE_NEW_ICON_UNLOCKED,
