@@ -1,8 +1,8 @@
 diff --git a/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java b/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
-index c3f150d..5cf6ddc 100644
+index 1370dcc..c3be88e 100644
 --- a/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
 +++ b/chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
-@@ -6319,9 +6319,11 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
+@@ -6333,9 +6333,11 @@ public class ChromeTabbedActivity extends ChromeActivity implements PreAttachInt
                      // The new tab opens before the old ones close. Chromium closes a window left
                      // with no tab at all, even for a moment, which shut Bare as it reopened.
                      if (closeTabs) {
